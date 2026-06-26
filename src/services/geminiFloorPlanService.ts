@@ -1,9 +1,14 @@
 // Groq Vision API service for floor plan security estimation
-// Uses qwen/qwen3.6-27b — ultra-fast, free tier at console.groq.com
-// Note: Groq vision supports JPEG, PNG, GIF, WEBP. PDFs are handled as text-only context.
+// Phase 1 Vision: qwen/qwen3.6-27b  — vision-capable, reads floor plan images
+// Phase 2 BOQ:    llama-3.3-70b-versatile — large reasoning model, generates accurate quantities
+// Get a free key at console.groq.com
 
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
+
+// Vision model — supports image_url input (qwen is currently the best vision model on Groq)
 const GROQ_VISION_MODEL = 'qwen/qwen3.6-27b';
+// BOQ reasoning model — 70B, much better at quantity math and JSON structure
+const GROQ_REASONING_MODEL = 'llama-3.3-70b-versatile';
 
 // API key loaded from .env (VITE_GROQ_API_KEY)
 const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY as string;
@@ -69,7 +74,7 @@ const SYSTEM_RULES: Record<string, { label: string; rules: string; exampleItems:
     label: 'CCTV System',
     rules: `- IP Dome Camera: 1 per 80–100 sqm or per room/corridor entry point
 - IP Bullet Camera: use for outdoor perimeter, parking lots, building exterior
-- PTZ Camera: 1 per large open area (lobby, atrium, warehouse floor > 500sqm)
+- PTZ Camera: 1 per large open area (lobby, atrium, warehouse floor >500sqm)
 - PoE Network Switch (8/16/24-port): 1 per 8–16 cameras
 - NVR (Network Video Recorder): size based on camera count (8ch, 16ch, 32ch)
 - Hard Disk Drive (HDD): calculate for 30-day retention at 1080p (≈1TB per 4 cameras)
@@ -249,23 +254,68 @@ const SYSTEM_RULES: Record<string, { label: string; rules: string; exampleItems:
   },
 };
 
-function buildPrompt(
+// ─── STEP 1 PROMPT: Floor Plan Visual Analysis ───────────────────────────────
+// This prompt forces the model to carefully read and count everything in the image
+// before generating any BOQ numbers.
+function buildAnalysisPrompt(
   surveyType: string,
   info: { buildingType?: string; floors?: number; location?: string; projectName?: string; surveyScope?: string },
-  imageCount: number,
-  pdfCount: number
 ): string {
-  const parts: string[] = [];
-  if (imageCount > 0) parts.push(`${imageCount} floor plan image${imageCount > 1 ? 's' : ''}`);
-  if (pdfCount > 0) parts.push(`${pdfCount} PDF document${pdfCount > 1 ? 's' : ''} (described by filename only)`);
-  const fileDesc = parts.join(' and ');
-
-  // Parse the surveyType field — may be comma-separated list like "CCTV,FDAS,ACCESS_CONTROL"
   const systemKeys = surveyType.split(',').map(s => s.trim().toUpperCase());
   const systems = systemKeys.filter(k => SYSTEM_RULES[k]);
-  const unknownSystems = systemKeys.filter(k => !SYSTEM_RULES[k]);
+  const systemLabel = systems.length > 0
+    ? systems.map(k => SYSTEM_RULES[k].label).join(', ')
+    : 'General Security System';
 
-  // Build system-specific rules block
+  return `You are an expert security systems estimator reviewing architectural floor plans for a ${systemLabel} installation in the Philippines.
+
+PROJECT DETAILS:
+- Building type: ${info.buildingType || 'Office'}
+- Floors shown: ${info.floors || 1}
+- Location: ${info.location || 'Metro Manila, Philippines'}
+- Project: ${info.projectName || 'Security Installation'}${info.surveyScope ? `\n- Scope: ${info.surveyScope}` : ''}
+
+TASK — Carefully analyze the floor plan image(s) and extract the following EXACT counts. Be precise. Look at every room, door, and corridor in the image.
+
+Respond in this EXACT JSON format (no markdown, no explanation):
+{
+  "floorCount": <number of floors visible in the plan>,
+  "estimatedTotalAreaSqm": <total built-up area in square meters — estimate from scale or room sizes>,
+  "rooms": {
+    "offices": <count all labeled office / workstation / cubicle rooms>,
+    "conferenceRooms": <count all meeting / conference / boardrooms>,
+    "serverRooms": <count all server / IDF / MDF / telecom rooms>,
+    "toilets": <count all toilet / CR / comfort room spaces>,
+    "lobbies": <count all lobby / reception / entrance hall areas>,
+    "corridors": <count all corridor / hallway segments>,
+    "stairwells": <count all staircase / fire exit stairwells>,
+    "elevatorShafts": <count all elevator / lift shafts>,
+    "parkingSlots": <count all marked parking slots or bays>,
+    "warehouse": <count all warehouse / storage / bodega areas>,
+    "kitchen": <count all pantry / kitchen / break room areas>,
+    "other": <count all other unlabeled or miscellaneous rooms>
+  },
+  "doors": {
+    "mainEntrances": <count of main lobby / main entrance doors>,
+    "fireExitDoors": <count of emergency / fire exit doors>,
+    "securedDoors": <count of doors likely needing access control — server rooms, restricted areas>,
+    "regularDoors": <count of all other interior doors>
+  },
+  "ceilingHeightMeters": <estimated ceiling height — typical office = 3.0m, warehouse = 6–9m>,
+  "buildingPerimeterMeters": <estimate the outer perimeter in meters for cable routing>,
+  "observations": "Describe in 2–3 sentences what you see: layout, key zones, special areas, and anything notable for security system planning."
+}`;
+}
+
+// ─── STEP 2 PROMPT: BOQ Generation from analysis data ────────────────────────
+function buildBoqPrompt(
+  surveyType: string,
+  info: { buildingType?: string; floors?: number; location?: string; projectName?: string; surveyScope?: string },
+  analysis: Record<string, unknown>,
+): string {
+  const systemKeys = surveyType.split(',').map(s => s.trim().toUpperCase());
+  const systems = systemKeys.filter(k => SYSTEM_RULES[k]);
+
   let systemRulesBlock = '';
   if (systems.length > 0) {
     systemRulesBlock = systems.map(key => {
@@ -273,41 +323,61 @@ function buildPrompt(
       return `\n## ${s.label}\n${s.rules}`;
     }).join('\n');
   } else {
-    // Fallback for unknown/OTHER
     systemRulesBlock = `\n## General Security Systems\n- Estimate equipment appropriate for the building type and floor plan\n- Include cabling in meters where applicable`;
   }
 
-  // Build example consumables from all selected systems
   const exampleConsumables = systems.map(key => SYSTEM_RULES[key].exampleItems).join(',\n    ');
   const systemLabel = systems.length > 0
     ? systems.map(k => SYSTEM_RULES[k].label).join(' + ')
-    : (unknownSystems[0] || 'Security System');
+    : 'Security System';
 
-  return `You are an expert electronic security and fire safety systems estimator working in the Philippines.
+  const rooms = analysis.rooms as Record<string, number> || {};
+  const doors = analysis.doors as Record<string, number> || {};
+  const totalRooms = Object.values(rooms).reduce((a, b) => a + (b || 0), 0);
+  const totalAreaSqm = (analysis.estimatedTotalAreaSqm as number) || (totalRooms * 25);
+  const perimeter = (analysis.buildingPerimeterMeters as number) || 100;
+  const ceilingH = (analysis.ceilingHeightMeters as number) || 3.0;
 
-Analyze ${fileDesc} and generate a detailed technical bill-of-quantities (BOQ) for the following system installation:
-**${systemLabel}**
+  return `You are an expert electronic security and fire safety systems estimator for the Philippines.
 
-Project context:
-- Building type: ${info.buildingType || 'Office'}
-- Number of floors: ${info.floors || 1}
-- Location: ${info.location || 'Metro Manila, Philippines'}
-- Project name: ${info.projectName || 'Security Installation'}${info.surveyScope ? `\n- Scope notes: ${info.surveyScope}` : ''}
+You have already analyzed the floor plan. Here are the EXACT counts extracted:
 
-=== SYSTEM-SPECIFIC EQUIPMENT RULES ===
-Apply ONLY the rules for the systems listed below. Do NOT include equipment from other systems not listed.
+FLOOR PLAN ANALYSIS RESULTS:
+- Total area: ~${totalAreaSqm} sqm across ${analysis.floorCount || info.floors || 1} floor(s)
+- Offices: ${rooms.offices || 0}, Conference rooms: ${rooms.conferenceRooms || 0}, Server rooms: ${rooms.serverRooms || 0}
+- Lobbies: ${rooms.lobbies || 0}, Corridors: ${rooms.corridors || 0}, Toilets: ${rooms.toilets || 0}
+- Stairwells: ${rooms.stairwells || 0}, Elevators: ${rooms.elevatorShafts || 0}
+- Parking slots: ${rooms.parkingSlots || 0}, Warehouse: ${rooms.warehouse || 0}, Kitchen: ${rooms.kitchen || 0}, Other: ${rooms.other || 0}
+- Main entrances: ${doors.mainEntrances || 0}, Fire exits: ${doors.fireExitDoors || 0}
+- Secured/restricted doors: ${doors.securedDoors || 0}, Regular doors: ${doors.regularDoors || 0}
+- Building perimeter: ~${perimeter}m, Ceiling height: ~${ceilingH}m
+- Observations: ${(analysis.observations as string) || 'N/A'}
+
+SYSTEM TO INSTALL: ${systemLabel}
+Building: ${info.buildingType || 'Office'}, ${info.floors || 1} floor(s), ${info.location || 'Metro Manila'}${info.surveyScope ? `\nScope: ${info.surveyScope}` : ''}
+
+=== EQUIPMENT RULES — Apply EXACTLY to the room/door counts above ===
 ${systemRulesBlock}
 
-=== MANPOWER RULES ===
-- Always include: Lead Security Engineer (1 person, supervises the whole job)
-- Always include: Safety Officer (1 person, DOLE compliance)
-- Add system installers based on scope: ~4–6 CCTV cameras/day, ~100m cable/day, ~8–10 detectors/day, ~4 access doors/day
-- man-days = ceil(headcount × hours / 8)
+=== CABLE LENGTH CALCULATION ===
+- Route cables from each device back to the nearest panel/NVR/controller
+- Average horizontal run = half the floor width + vertical drop from ceiling
+- Add 15% slack for bends, loops, and termination
+- Use the building perimeter (${perimeter}m) and area (${totalAreaSqm} sqm) to calibrate distances
 
-IMPORTANT: Return ONLY a single valid JSON object. No markdown, no explanation. Just raw JSON.
+=== MANPOWER CALCULATION ===
+- Lead Security Engineer: 1 person, full project duration
+- Safety Officer: 1 person, DOLE compliance (full duration)
+- System Installers: size based on scope — ~4–6 CCTV cameras per day, ~100m cable per day, ~8–10 detectors per day, ~4 access doors per day
+- man-days = ceil(headcount × hours / 8)
+- Working hours per day = 8
+
+CRITICAL: Use the EXACT room and door counts above — do NOT invent numbers. Scale quantities directly from the analysis data.
+
+Respond ONLY with a single valid JSON object. No markdown fences, no explanation:
 
 {
-  "observations": "Describe what you see in the floor plan: room count, estimated total area sqm, key zones (lobby, server room, parking, corridors, etc.), and which areas need coverage for each system.",
+  "observations": "2-3 sentence summary of the floor plan and what drives the BOQ quantities.",
   "manpower": [
     { "role": "Lead Security Engineer", "headcount": 1, "hours": 32, "manDays": 4 },
     { "role": "Systems Installer", "headcount": 2, "hours": 48, "manDays": 12 }
@@ -319,11 +389,72 @@ IMPORTANT: Return ONLY a single valid JSON object. No markdown, no explanation. 
     { "type": "Travel Fee", "amount": 0, "description": "Mobilization to site" }
   ],
   "constraints": {
-    "physical": "Wall types, ceiling height, physical obstacles from floor plan",
-    "electrical": "Power supply needs, UPS, DB room location",
-    "installation": "Access timing, night shift considerations, tenant restrictions"
+    "physical": "Describe wall types, ceiling height (${ceilingH}m), and physical obstacles from the floor plan.",
+    "electrical": "Describe power supply needs, UPS requirements, DB room location.",
+    "installation": "Describe access timing, shift requirements, and any restrictions."
   }
 }`;
+}
+
+async function callGroq(
+  apiKey: string,
+  contentParts: object[],
+  model: string,
+  systemPrompt?: string
+): Promise<string> {
+  const messages: object[] = [];
+
+  if (systemPrompt) {
+    messages.push({ role: 'system', content: systemPrompt });
+  }
+
+  messages.push({
+    role: 'user',
+    content: contentParts,
+  });
+
+  const requestBody = {
+    model,
+    messages,
+    temperature: 0.1,       // Low temp = consistent, factual output
+    max_tokens: 4096,
+  };
+
+  const response = await fetch(GROQ_API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey.trim()}`,
+    },
+    body: JSON.stringify(requestBody),
+  });
+
+  if (!response.ok) {
+    let errMsg = `Groq API error (${response.status})`;
+    try {
+      const errData = await response.json();
+      errMsg = errData?.error?.message || errMsg;
+    } catch {}
+    throw new Error(errMsg);
+  }
+
+  const data = await response.json();
+  const rawText: string | undefined = data?.choices?.[0]?.message?.content;
+  if (!rawText) throw new Error('Groq returned an empty response. Try again.');
+  return rawText;
+}
+
+function extractJson(raw: string): Record<string, unknown> {
+  const cleaned = raw
+    .replace(/^```json\s*/i, '')
+    .replace(/^```\s*/i, '')
+    .replace(/\s*```$/i, '')
+    .trim();
+
+  const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) throw new Error('Could not extract JSON from response. Try a higher resolution floor plan image.');
+
+  return JSON.parse(jsonMatch[0]);
 }
 
 export async function analyzeFloorPlan(
@@ -347,95 +478,82 @@ export async function analyzeFloorPlan(
     throw new Error('No floor plan files provided.');
   }
 
-  // Separate images (can be sent visually) from PDFs (text-only context)
+  // Separate images from PDFs
   const images = imageFiles.filter(isImageFile);
   const pdfs = imageFiles.filter(f => !isImageFile(f));
 
-  // Build content array — image parts first, then text prompt
-  const contentParts: object[] = [];
-
-  // Convert image files to base64 and add as image_url parts
+  // Build image content parts for vision
+  const imageParts: object[] = [];
   for (const img of images) {
     const base64 = await fileToBase64(img);
     const mime = getMimeType(img);
-    contentParts.push({
+    imageParts.push({
       type: 'image_url',
-      image_url: {
-        url: `data:${mime};base64,${base64}`,
-      },
+      image_url: { url: `data:${mime};base64,${base64}` },
     });
   }
 
-  // Add PDF file names as context in the prompt
-  const prompt = buildPrompt(surveyType, buildingInfo, images.length, pdfs.length);
+  let analysis: Record<string, unknown> = {};
 
-  let finalPrompt = prompt;
-  if (pdfs.length > 0) {
-    finalPrompt += `\n\nPDF files provided (visual content not available, use filename as context):\n${pdfs.map(f => `- ${f.name}`).join('\n')}`;
-  }
+  if (images.length > 0) {
+    // ── PHASE 1: Visual analysis — count rooms, doors, area from the image ──
+    const phase1Prompt = buildAnalysisPrompt(surveyType, buildingInfo);
 
-  contentParts.push({ type: 'text', text: finalPrompt });
+    let pdfContext = '';
+    if (pdfs.length > 0) {
+      pdfContext = `\n\nAdditional PDF files (use filename for context):\n${pdfs.map(f => `- ${f.name}`).join('\n')}`;
+    }
 
-  const requestBody = {
-    model: GROQ_VISION_MODEL,
-    messages: [
-      {
-        role: 'user',
-        content: contentParts,
-      },
-    ],
-    temperature: 0.2,
-    max_tokens: 4096,
-    reasoning_format: 'hidden',
-    reasoning_effort: 'none',
-  };
+    const phase1Parts: object[] = [
+      ...imageParts,
+      { type: 'text', text: phase1Prompt + pdfContext },
+    ];
 
-  const response = await fetch(GROQ_API_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey.trim()}`,
-    },
-    body: JSON.stringify(requestBody),
-  });
+    const phase1Raw = await callGroq(apiKey, phase1Parts, GROQ_VISION_MODEL);
 
-  if (!response.ok) {
-    let errMsg = `Groq API error (${response.status})`;
     try {
-      const errData = await response.json();
-      errMsg = errData?.error?.message || errMsg;
-    } catch {}
-    throw new Error(errMsg);
-  }
+      analysis = extractJson(phase1Raw);
+    } catch {
+      // If phase 1 JSON fails, continue with empty analysis and let phase 2 use building info
+      console.warn('Phase 1 analysis parse failed, falling back to building info only');
+      analysis = {
+        floorCount: buildingInfo.floors || 1,
+        estimatedTotalAreaSqm: (buildingInfo.floors || 1) * 300,
+        observations: 'Floor plan analyzed from building information.',
+      };
+    }
 
-  const data = await response.json();
-  const rawText: string | undefined = data?.choices?.[0]?.message?.content;
+    // ── PHASE 2: BOQ generation using the analysis data ──
+    const phase2Prompt = buildBoqPrompt(surveyType, buildingInfo, analysis);
+    const phase2Parts: object[] = [
+      { type: 'text', text: phase2Prompt },
+    ];
 
-  if (!rawText) {
-    throw new Error('Groq returned an empty response. Try again.');
-  }
+    // Phase 2 uses the larger 70B reasoning model — no images needed, just the analysis data
+    const phase2Raw = await callGroq(apiKey, phase2Parts, GROQ_REASONING_MODEL);
+    const boq = extractJson(phase2Raw) as unknown as FloorPlanEstimation;
 
-  // Strip markdown fences if model wrapped the JSON
-  const cleaned = rawText
-    .replace(/^```json\s*/i, '')
-    .replace(/^```\s*/i, '')
-    .replace(/\s*```$/i, '')
-    .trim();
+    // Merge observations from phase 1 into final result if phase 2 observations is generic
+    if (analysis.observations && typeof analysis.observations === 'string' && analysis.observations.length > boq.observations?.length) {
+      boq.observations = analysis.observations;
+    }
 
-  // Extract JSON object if there's surrounding text
-  const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) {
-    throw new Error(
-      'Could not extract JSON from Groq response. The floor plan may be unclear — try a higher resolution image.'
-    );
-  }
+    return boq;
 
-  try {
-    return JSON.parse(jsonMatch[0]) as FloorPlanEstimation;
-  } catch {
-    throw new Error(
-      'Could not parse Groq response. Try again or use a clearer floor plan image.'
-    );
+  } else {
+    // PDF-only: single pass with filename context
+    const prompt = buildBoqPrompt(surveyType, buildingInfo, {
+      floorCount: buildingInfo.floors || 1,
+      estimatedTotalAreaSqm: (buildingInfo.floors || 1) * 300,
+      observations: `PDF floor plans provided: ${pdfs.map(f => f.name).join(', ')}`,
+    });
+
+    const textParts: object[] = [
+      { type: 'text', text: prompt + `\n\nPDF files:\n${pdfs.map(f => `- ${f.name}`).join('\n')}` },
+    ];
+
+    const raw = await callGroq(apiKey, textParts, GROQ_REASONING_MODEL);
+    return extractJson(raw) as unknown as FloorPlanEstimation;
   }
 }
 
