@@ -5,6 +5,8 @@ import Sidebar from './Sidebar';
 import type { View } from './Sidebar';
 import NotificationBell from '../notifications/NotificationBell';
 import type { Notification } from '../notifications/NotificationBell';
+import Home from './Home';
+import CompanyDetail from '../projects/CompanyDetail';
 
 interface Props {
   user: User;
@@ -12,32 +14,36 @@ interface Props {
   projects: Project[];
   notifications: Notification[];
   onSelectProject: (project: Project) => void;
-  onCreateProject: (project: Project) => void;
+  onCreateProject: (project: Project, keepOnHome?: boolean) => void;
   onSettings: () => void;
   onNavigateToCreate: () => void;
+  selectedCompanyProject: Project | null;
+  setSelectedCompanyProject: (project: Project | null) => void;
 }
 
 type SortMode = 'newest' | 'oldest' | 'name-asc' | 'name-desc';
 
 const viewTitles: Record<string, string> = {
-  dashboard: 'Dashboard', workspace: 'Workspace', todo: 'To-do', assignment: 'All Assignments',
+  home: 'Home', dashboard: 'Dashboard', workspace: 'Workspace', todo: 'To-do', assignment: 'All Assignments',
   missing: 'Missing Requirements', done: 'Done', history: 'History / Archive', approval: 'Approval Pipeline',
   finalize: 'Finalize Review', ongoing: 'Ongoing Surveys', upcoming: 'Upcoming Surveys',
   'missing-notif': 'Missing Alerts', 'approval-notif': 'Approval Alerts', 'finalize-notif': 'Finalize Alerts',
 };
 
 function filterProjects(projects: Project[], view: string): Project[] {
+  const actualProjects = projects.filter(p => p.buildingType !== 'Other');
+
   switch (view) {
-    case 'workspace': case 'todo': return projects.filter(p => p.status === 'Pending' || p.status === 'In Progress');
-    case 'assignment': return projects;
-    case 'missing': case 'missing-notif': return projects.filter(p => !p.status || p.status === 'Pending');
-    case 'done': return projects.filter(p => p.status === 'Completed' || p.status?.includes('Finalized'));
-    case 'history': return projects.filter(p => p.status === 'Completed');
-    case 'ongoing': return projects.filter(p => p.status === 'In Progress');
-    case 'upcoming': return projects.filter(p => p.status === 'Pending' && !!p.startDate && new Date(p.startDate) > new Date());
-    case 'approval': case 'approval-notif': return projects.filter(p => p.status === 'Finalized' || p.status === 'In Progress');
-    case 'finalize': case 'finalize-notif': return projects.filter(p => p.status === 'Finalized - Approved' || p.status === 'Finalized - Rejected');
-    default: return projects;
+    case 'workspace': case 'todo': return actualProjects.filter(p => p.status === 'Pending' || p.status === 'In Progress');
+    case 'assignment': return actualProjects;
+    case 'missing': case 'missing-notif': return actualProjects.filter(p => !p.status || p.status === 'Pending');
+    case 'done': return actualProjects.filter(p => p.status === 'Completed' || p.status?.includes('Finalized'));
+    case 'history': return actualProjects.filter(p => p.status === 'Completed');
+    case 'ongoing': return actualProjects.filter(p => p.status === 'In Progress');
+    case 'upcoming': return actualProjects.filter(p => p.status === 'Pending' && !!p.startDate && new Date(p.startDate) > new Date());
+    case 'approval': case 'approval-notif': return actualProjects.filter(p => p.status === 'Finalized' || p.status === 'In Progress');
+    case 'finalize': case 'finalize-notif': return actualProjects.filter(p => p.status === 'Finalized - Approved' || p.status === 'Finalized - Rejected');
+    default: return actualProjects;
   }
 }
 
@@ -53,9 +59,9 @@ function sortProjects(projects: Project[], sort: SortMode): Project[] {
 
 const statusConfig: Record<string, { color: string; bg: string; bar: string }> = {
   'In Progress': { color: '#2563EB', bg: 'rgba(37,99,235,0.08)', bar: '#2563EB' },
-  'Pending': { color: '#D97706', bg: 'rgba(217,119,6,0.08)', bar: '#D97706' },
+  'Pending': { color: '#1E3A8A', bg: 'rgba(30,58,138,0.08)', bar: '#1E3A8A' },
   'Completed': { color: '#059669', bg: 'rgba(5,150,105,0.08)', bar: '#059669' },
-  'Finalized': { color: '#7C3AED', bg: 'rgba(124,58,237,0.08)', bar: '#7C3AED' },
+  'Finalized': { color: '#059669', bg: 'rgba(5,150,105,0.08)', bar: '#059669' },
 };
 
 function StatusBadge({ status }: { status: string }) {
@@ -72,9 +78,21 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-export default function Dashboard({ user, onLogout, projects, notifications, onSelectProject, onCreateProject, onSettings, onNavigateToCreate }: Props) {
-  const [view, setView] = useState<View>('dashboard');
+export default function Dashboard({
+  user,
+  onLogout,
+  projects,
+  notifications,
+  onSelectProject,
+  onCreateProject,
+  onSettings,
+  onNavigateToCreate,
+  selectedCompanyProject,
+  setSelectedCompanyProject,
+}: Props) {
+  const [view, setView] = useState<View>('home');
   const [showCreate, setShowCreate] = useState(false);
+  const [isCompanyMode, setIsCompanyMode] = useState(false);
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<SortMode>('newest');
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
@@ -90,6 +108,10 @@ export default function Dashboard({ user, onLogout, projects, notifications, onS
   const [editProject, setEditProject] = useState<Project | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [projectList, setProjectList] = useState<Project[]>(projects);
+
+  useEffect(() => {
+    setProjectList(projects);
+  }, [projects]);
 
   const isNotification = ['ongoing', 'upcoming', 'missing-notif', 'approval-notif', 'finalize-notif'].includes(view);
 
@@ -116,8 +138,13 @@ export default function Dashboard({ user, onLogout, projects, notifications, onS
   const handleSaveEdit = (updated: Project) => { setProjectList(prev => prev.map(p => p.id === updated.id ? updated : p)); setEditProject(null); };
   const handlePin = (id: string) => { setPinned(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; }); setMenuOpen(null); };
 
-  const navigate = (v: View) => { if (v === 'create-survey') { onNavigateToCreate(); return; } setView(v); };
+  const navigate = (v: View) => {
+    setSelectedCompanyProject(null);
+    if (v === 'create-survey') { onNavigateToCreate(); return; }
+    setView(v);
+  };
   const navigateNotif = (type: string) => {
+    setSelectedCompanyProject(null);
     const m: Record<string, View> = { notifications: 'dashboard', ongoing: 'ongoing', upcoming: 'upcoming', missing: 'missing-notif', approval: 'approval-notif', finalize: 'finalize-notif' };
     setView(m[type] || 'dashboard');
   };
@@ -187,360 +214,384 @@ export default function Dashboard({ user, onLogout, projects, notifications, onS
           </div>
         </div>
 
-        {/* Page title row */}
-        <div className="px-8 pt-8 flex items-end justify-between">
-          <div>
-            <h1 className="text-2xl font-black tracking-tight text-[#0F172A] uppercase">
-              {view === 'dashboard' ? 'Dashboard' : viewTitles[view] || 'Dashboard'}
-            </h1>
-            <p className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider mt-1">
-              AA2000 SECURITY & TECHNOLOGY SOLUTIONS INC. • ESTIMATION PLATFORM
-            </p>
-          </div>
-
-          {/* New Project button (Admin only, on relevant views) */}
-          {user.role === 'ADMIN' && !isNotification && view === 'dashboard' && (
-            <button
-              onClick={() => setShowCreate(true)}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-full text-[10px] font-bold text-white tracking-widest hover:opacity-95 transition-all duration-150 shadow-sm"
-              style={{ background: '#1E3A8A' }}
-            >
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-              </svg>
-              NEW PROJECT
-            </button>
-          )}
-        </div>
-
-        {/* Stats Row — dashboard view only */}
-        {view === 'dashboard' && (
-          <div className="px-8 pt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-            {/* Total Projects */}
-            <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex flex-col justify-between relative overflow-hidden h-36">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold text-[#94A3B8] tracking-widest">TOTAL PROJECTS</span>
-              </div>
+        {selectedCompanyProject ? (
+          <CompanyDetail
+            user={user}
+            companyProject={selectedCompanyProject}
+            projects={projectList}
+            onBack={() => setSelectedCompanyProject(null)}
+            onSelectProject={onSelectProject}
+            onNewSurvey={onNavigateToCreate}
+          />
+        ) : view === 'home' ? (
+          <Home
+            user={user}
+            projects={projectList}
+            onSelectCompany={(companyName) => {
+              const found = projectList.find(p => p.name === companyName);
+              if (found) setSelectedCompanyProject(found);
+            }}
+            onSelectProject={onSelectProject}
+            onNewCompanyClick={() => { setIsCompanyMode(true); setShowCreate(true); }}
+          />
+        ) : (
+          <>
+            {/* Page title row */}
+            <div className="px-8 pt-8 flex items-end justify-between">
               <div>
-                <p className="text-3xl font-black text-[#1E3A8A]">{totalProjects}</p>
-                <p className="text-[10px] font-bold text-slate-400 mt-1">All site surveys</p>
-                <div className="absolute right-4 bottom-4 w-11 h-11 bg-blue-50 rounded-2xl flex items-center justify-center text-[#1E3A8A] text-lg">
-                  📋
-                </div>
-              </div>
-            </div>
-
-            {/* In Progress */}
-            <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex flex-col justify-between relative overflow-hidden h-36">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold text-[#94A3B8] tracking-widest">IN PROGRESS</span>
-                {inProgressCount > 0 && (
-                  <span className="bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full text-[9px] font-extrabold">Active</span>
-                )}
-              </div>
-              <div>
-                <p className="text-3xl font-black text-[#2563EB]">{inProgressCount}</p>
-                <p className="text-[10px] font-bold text-slate-400 mt-1">Ongoing surveys</p>
-                <div className="absolute right-4 bottom-4 w-11 h-11 bg-blue-50 rounded-2xl flex items-center justify-center text-lg">
-                  🔧
-                </div>
-              </div>
-            </div>
-
-            {/* Pending */}
-            <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex flex-col justify-between relative overflow-hidden h-36">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold text-[#94A3B8] tracking-widest">PENDING</span>
-                {pendingCount > 0 && (
-                  <span className="bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full text-[9px] font-extrabold">Queued</span>
-                )}
-              </div>
-              <div>
-                <p className="text-3xl font-black text-[#D97706]">{pendingCount}</p>
-                <p className="text-[10px] font-bold text-slate-400 mt-1">Awaiting start</p>
-                <div className="absolute right-4 bottom-4 w-11 h-11 bg-amber-50 rounded-2xl flex items-center justify-center text-lg">
-                  🗓️
-                </div>
-              </div>
-            </div>
-
-            {/* Completed */}
-            <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex flex-col justify-between relative overflow-hidden h-36">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold text-[#94A3B8] tracking-widest">COMPLETED</span>
-                {completedCount > 0 && (
-                  <span className="bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full text-[9px] font-extrabold">Done</span>
-                )}
-              </div>
-              <div>
-                <p className="text-3xl font-black text-[#059669]">{completedCount}</p>
-                <p className="text-[10px] font-bold text-slate-400 mt-1">Finalized surveys</p>
-                <div className="absolute right-4 bottom-4 w-11 h-11 bg-emerald-50 rounded-2xl flex items-center justify-center text-lg">
-                  ✅
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Info Cards — dashboard view only */}
-        {view === 'dashboard' && (
-          <div className="px-8 pt-6 grid grid-cols-1 lg:grid-cols-3 gap-5">
-
-            {/* Survey Workflow Pipeline */}
-            <div className="lg:col-span-2 bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
-              <div className="flex items-center justify-between mb-5">
-                <div>
-                  <h3 className="text-xs font-black tracking-wider text-[#0F172A] uppercase">Survey Workflow Pipeline</h3>
-                  <p className="text-[9px] font-bold text-[#94A3B8] uppercase mt-0.5">Project status distribution</p>
-                </div>
-                <span className="text-[9px] font-bold text-[#1E3A8A] bg-blue-50 px-2.5 py-1 rounded-full tracking-wider">
-                  {totalProjects} total
-                </span>
+                <h1 className="text-2xl font-black tracking-tight text-[#0F172A] uppercase">
+                  {view === 'dashboard' ? 'Dashboard' : viewTitles[view] || 'Dashboard'}
+                </h1>
+                <p className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider mt-1">
+                  AA2000 SECURITY & TECHNOLOGY SOLUTIONS INC. • ESTIMATION PLATFORM
+                </p>
               </div>
 
-              {/* Pipeline stages */}
-              <div className="space-y-4">
-                {pipelineStages.map(stage => {
-                  const pct = totalProjects > 0 ? Math.round((stage.count / totalProjects) * 100) : 0;
-                  return (
-                    <div key={stage.label}>
-                      <div className="flex items-center justify-between text-[10px] font-bold text-slate-700 mb-1.5">
-                        <div className="flex items-center gap-2">
-                          <span
-                            className="w-2 h-2 rounded-full"
-                            style={{ background: stage.color }}
-                          />
-                          <span>{stage.label}</span>
-                        </div>
-                        <span className="text-slate-400">{stage.count} project{stage.count !== 1 ? 's' : ''} · {pct}%</span>
-                      </div>
-                      <div className="w-full bg-[#F4F6FA] h-3 rounded-full overflow-hidden">
-                        <div
-                          className="h-full rounded-full transition-all duration-700"
-                          style={{ width: `${Math.max(pct, pct > 0 ? 4 : 0)}%`, background: stage.color }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Empty state */}
-              {totalProjects === 0 && (
-                <div className="flex flex-col items-center justify-center py-8 gap-2">
-                  <span className="text-2xl">📊</span>
-                  <p className="text-xs font-bold text-slate-400">No projects yet. Create one to start tracking.</p>
-                </div>
+              {/* New Project button (Admin only, on relevant views) */}
+              {user.role === 'ADMIN' && !isNotification && view === 'dashboard' && (
+                <button
+                  onClick={() => { setIsCompanyMode(false); setShowCreate(true); }}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-full text-[10px] font-bold text-white tracking-widest hover:opacity-95 transition-all duration-150 shadow-sm"
+                  style={{ background: '#1E3A8A' }}
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                  </svg>
+                  NEW PROJECT
+                </button>
               )}
             </div>
 
-            {/* Survey Category Quick Guide */}
-            <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex flex-col">
-              <div className="mb-4">
-                <h3 className="text-xs font-black tracking-wider text-[#0F172A] uppercase">Survey Categories</h3>
-                <p className="text-[9px] font-bold text-[#94A3B8] uppercase mt-0.5">Available system types</p>
-              </div>
-              <div className="space-y-2.5 flex-1">
-                {[
-                  { label: 'CCTV Surveillance', icon: '📷', color: '#1E3A8A', bg: '#EFF6FF' },
-                  { label: 'Fire Alarm System', icon: '🔔', color: '#B91C1C', bg: '#FEF2F2' },
-                  { label: 'Fire Protection', icon: '🔥', color: '#D97706', bg: '#FFFBEB' },
-                  { label: 'Access Control', icon: '🔑', color: '#047857', bg: '#ECFDF5' },
-                  { label: 'Burglar Alarm', icon: '🛡️', color: '#6D28D9', bg: '#F5F3FF' },
-                  { label: 'Other Systems', icon: '⚙️', color: '#334155', bg: '#F8FAFC' },
-                ].map(cat => (
-                  <div
-                    key={cat.label}
-                    className="flex items-center gap-3 px-3 py-2 rounded-xl"
-                    style={{ background: cat.bg }}
-                  >
-                    <span className="text-base">{cat.icon}</span>
-                    <span className="text-[11px] font-bold" style={{ color: cat.color }}>{cat.label}</span>
+            {/* Stats Row — dashboard view only */}
+            {view === 'dashboard' && (
+              <div className="px-8 pt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+                {/* Total Projects */}
+                <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex flex-col justify-between relative overflow-hidden h-36">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-[#94A3B8] tracking-widest">TOTAL PROJECTS</span>
                   </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Project Table */}
-        <div className="px-8 pt-6">
-          <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
-
-            {/* Controls row */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pb-5 border-b border-slate-100">
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-black text-slate-800 uppercase tracking-tight">
-                  {viewTitles[view] || 'Projects'}
-                </span>
-                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
-                  {ordered.length}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-3 w-full sm:w-auto">
-                {/* Search (only shown on non-dashboard views where top bar search won't filter) */}
-                {view !== 'dashboard' && (
-                  <div className="relative flex-1 sm:max-w-xs">
-                    <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                    <input
-                      type="text"
-                      value={search}
-                      onChange={e => setSearch(e.target.value)}
-                      placeholder="Search projects..."
-                      className="w-full pl-9 pr-4 py-2 rounded-xl text-xs bg-slate-50 border border-slate-200 text-slate-700 outline-none focus:border-[#1E3A8A] focus:bg-white"
-                    />
-                  </div>
-                )}
-
-                {/* Sort */}
-                <select
-                  value={sort}
-                  onChange={e => setSort(e.target.value as SortMode)}
-                  className="px-3 py-2 rounded-xl text-xs font-semibold bg-slate-50 border border-slate-200 text-slate-600 outline-none cursor-pointer focus:border-[#1E3A8A]"
-                >
-                  <option value="newest">Newest First</option>
-                  <option value="oldest">Oldest First</option>
-                  <option value="name-asc">Name A–Z</option>
-                  <option value="name-desc">Name Z–A</option>
-                </select>
-
-                {/* New Project (Admin only, non-dashboard views) */}
-                {user.role === 'ADMIN' && !isNotification && view !== 'dashboard' && (
-                  <button
-                    onClick={() => setShowCreate(true)}
-                    className="px-4 py-2 rounded-xl text-xs font-bold text-white hover:opacity-90 transition-all"
-                    style={{ background: '#1E3A8A' }}
-                  >
-                    + New Project
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Table */}
-            <div className="overflow-x-auto">
-              {ordered.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16 gap-3">
-                  <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center text-xl">
-                    📋
-                  </div>
-                  <div className="text-center">
-                    <p className="text-xs font-bold text-slate-600">No projects found</p>
-                    <p className="text-[11px] text-slate-400 mt-0.5">
-                      {user.role === 'ADMIN' ? 'Create a new project to get started' : 'No assignments yet'}
-                    </p>
+                  <div>
+                    <p className="text-3xl font-black text-[#1E3A8A]">{totalProjects}</p>
+                    <p className="text-[10px] font-bold text-slate-400 mt-1">All site surveys</p>
+                    <div className="absolute right-4 bottom-4 w-11 h-11 bg-blue-50 rounded-2xl flex items-center justify-center text-[#1E3A8A] text-lg">
+                      📋
+                    </div>
                   </div>
                 </div>
-              ) : (
-                <table className="w-full text-left border-collapse mt-2">
-                  <thead>
-                    <tr className="text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
-                      <th className="py-4 pl-4">Project / Client</th>
-                      <th className="py-4 text-center">Status</th>
-                      <th className="py-4 text-center">Date</th>
-                      <th className="py-4 pr-4 text-right"></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {ordered.map(project => {
-                      const isPinned = pinned.has(project.id);
-                      const isOpen = menuOpen === project.id;
-                      const statusBar = Object.entries(statusConfig).find(([key]) => project.status?.includes(key))?.[1]?.bar || '#64748B';
 
+                {/* In Progress */}
+                <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex flex-col justify-between relative overflow-hidden h-36">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-[#94A3B8] tracking-widest">IN PROGRESS</span>
+                    {inProgressCount > 0 && (
+                      <span className="bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full text-[9px] font-extrabold">Active</span>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-3xl font-black text-[#2563EB]">{inProgressCount}</p>
+                    <p className="text-[10px] font-bold text-slate-400 mt-1">Ongoing surveys</p>
+                    <div className="absolute right-4 bottom-4 w-11 h-11 bg-blue-50 rounded-2xl flex items-center justify-center text-lg">
+                      🔧
+                    </div>
+                  </div>
+                </div>
+
+                {/* Pending */}
+                <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex flex-col justify-between relative overflow-hidden h-36">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-[#94A3B8] tracking-widest">PENDING</span>
+                    {pendingCount > 0 && (
+                      <span className="bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full text-[9px] font-extrabold">Queued</span>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-3xl font-black text-[#D97706]">{pendingCount}</p>
+                    <p className="text-[10px] font-bold text-slate-400 mt-1">Awaiting start</p>
+                    <div className="absolute right-4 bottom-4 w-11 h-11 bg-amber-50 rounded-2xl flex items-center justify-center text-lg">
+                      🗓️
+                    </div>
+                  </div>
+                </div>
+
+                {/* Completed */}
+                <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex flex-col justify-between relative overflow-hidden h-36">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-[#94A3B8] tracking-widest">COMPLETED</span>
+                    {completedCount > 0 && (
+                      <span className="bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full text-[9px] font-extrabold">Done</span>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-3xl font-black text-[#059669]">{completedCount}</p>
+                    <p className="text-[10px] font-bold text-slate-400 mt-1">Finalized surveys</p>
+                    <div className="absolute right-4 bottom-4 w-11 h-11 bg-emerald-50 rounded-2xl flex items-center justify-center text-lg">
+                      ✅
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Info Cards — dashboard view only */}
+            {view === 'dashboard' && (
+              <div className="px-8 pt-6 grid grid-cols-1 lg:grid-cols-3 gap-5">
+                {/* Survey Workflow Pipeline */}
+                <div className="lg:col-span-2 bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
+                  <div className="flex items-center justify-between mb-5">
+                    <div>
+                      <h3 className="text-xs font-black tracking-wider text-[#0F172A] uppercase">Survey Workflow Pipeline</h3>
+                      <p className="text-[9px] font-bold text-[#94A3B8] uppercase mt-0.5">Project status distribution</p>
+                    </div>
+                    <span className="text-[9px] font-bold text-[#1E3A8A] bg-blue-50 px-2.5 py-1 rounded-full tracking-wider">
+                      {totalProjects} total
+                    </span>
+                  </div>
+
+                  {/* Pipeline stages */}
+                  <div className="space-y-4">
+                    {pipelineStages.map(stage => {
+                      const pct = totalProjects > 0 ? Math.round((stage.count / totalProjects) * 100) : 0;
                       return (
-                        <tr
-                          key={project.id}
-                          onClick={() => onSelectProject(project)}
-                          className="hover:bg-slate-50 cursor-pointer border-b border-slate-50 transition-colors"
-                        >
-                          <td className="py-4 pl-4 flex items-center gap-3">
-                            <div
-                              className="w-1 h-8 rounded-full shrink-0"
-                              style={{ background: statusBar }}
-                            />
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs font-bold text-slate-800">{project.name}</span>
-                                {isPinned && (
-                                  <span className="text-[8px] font-extrabold px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 uppercase tracking-wide">
-                                    Pinned
-                                  </span>
-                                )}
-                              </div>
-                              <p className="text-[10px] text-slate-400 mt-0.5">
-                                {project.clientName} · {project.location}
-                              </p>
+                        <div key={stage.label}>
+                          <div className="flex items-center justify-between text-[10px] font-bold text-slate-700 mb-1.5">
+                            <div className="flex items-center gap-2">
+                              <span
+                                className="w-2 h-2 rounded-full"
+                                style={{ background: stage.color }}
+                              />
+                              <span>{stage.label}</span>
                             </div>
-                          </td>
-                          <td className="py-4 text-center">
-                            <StatusBadge status={project.status} />
-                          </td>
-                          <td className="py-4 text-center text-xs font-semibold text-slate-500">
-                            {project.startDate || '—'}
-                          </td>
-                          <td className="py-4 pr-4 text-right relative" onClick={e => e.stopPropagation()}>
-                            <button
-                              onClick={() => setMenuOpen(isOpen ? null : project.id)}
-                              className="p-1.5 rounded-lg hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-all"
-                            >
-                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h.01M12 12h.01M19 12h.01" />
-                              </svg>
-                            </button>
-
-                            {isOpen && (
-                              <>
-                                <div className="fixed inset-0 z-20" onClick={() => setMenuOpen(null)} />
-                                <div className="absolute right-4 top-10 z-30 w-40 rounded-xl bg-white border border-slate-200 py-1 shadow-lg text-left">
-                                  <button
-                                    onClick={() => { setEditProject(project); setMenuOpen(null); }}
-                                    className="w-full px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 hover:text-[#1E3A8A] flex items-center gap-1.5"
-                                  >
-                                    Edit Project
-                                  </button>
-                                  <button
-                                    onClick={() => handlePin(project.id)}
-                                    className="w-full px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 hover:text-[#1E3A8A] flex items-center gap-1.5"
-                                  >
-                                    {isPinned ? 'Unpin' : 'Pin Project'}
-                                  </button>
-                                  <button
-                                    onClick={() => onSelectProject(project)}
-                                    className="w-full px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 hover:text-[#1E3A8A] flex items-center gap-1.5"
-                                  >
-                                    View Details
-                                  </button>
-                                  <div className="border-t border-slate-100 my-1"></div>
-                                  <button
-                                    onClick={() => { setDeleteConfirm(project.id); setMenuOpen(null); }}
-                                    className="w-full px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 flex items-center gap-1.5"
-                                  >
-                                    Delete Project
-                                  </button>
-                                </div>
-              </>
-                            )}
-                          </td>
-                        </tr>
+                            <span className="text-slate-400">{stage.count} project{stage.count !== 1 ? 's' : ''} · {pct}%</span>
+                          </div>
+                          <div className="w-full bg-[#F4F6FA] h-3 rounded-full overflow-hidden">
+                            <div
+                              className="h-full rounded-full transition-all duration-700"
+                              style={{ width: `${Math.max(pct, pct > 0 ? 4 : 0)}%`, background: stage.color }}
+                            />
+                          </div>
+                        </div>
                       );
                     })}
-                  </tbody>
-                </table>
-              )}
-            </div>
+                  </div>
 
-          </div>
-        </div>
+                  {/* Empty state */}
+                  {totalProjects === 0 && (
+                    <div className="flex flex-col items-center justify-center py-8 gap-2">
+                      <span className="text-2xl">📊</span>
+                      <p className="text-xs font-bold text-slate-400">No projects yet. Create one to start tracking.</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Survey Category Quick Guide */}
+                <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex flex-col">
+                  <div className="mb-4">
+                    <h3 className="text-xs font-black tracking-wider text-[#0F172A] uppercase">Survey Categories</h3>
+                    <p className="text-[9px] font-bold text-[#94A3B8] uppercase mt-0.5">Available system types</p>
+                  </div>
+                  <div className="space-y-2.5 flex-1">
+                    {[
+                      { label: 'CCTV Surveillance', icon: '📷', color: '#1E3A8A', bg: '#EFF6FF' },
+                      { label: 'Fire Alarm System', icon: '🔔', color: '#B91C1C', bg: '#FEF2F2' },
+                      { label: 'Fire Protection', icon: '🔥', color: '#D97706', bg: '#FFFBEB' },
+                      { label: 'Access Control', icon: '🔑', color: '#047857', bg: '#ECFDF5' },
+                      { label: 'Burglar Alarm', icon: '🛡️', color: '#6D28D9', bg: '#F5F3FF' },
+                      { label: 'Other Systems', icon: '⚙️', color: '#334155', bg: '#F8FAFC' },
+                    ].map(cat => (
+                      <div
+                        key={cat.label}
+                        className="flex items-center gap-3 px-3 py-2 rounded-xl"
+                        style={{ background: cat.bg }}
+                      >
+                        <span className="text-base">{cat.icon}</span>
+                        <span className="text-[11px] font-bold" style={{ color: cat.color }}>{cat.label}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Project Table */}
+            <div className="px-8 pt-6">
+              <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
+
+                {/* Controls row */}
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pb-5 border-b border-slate-100">
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-black text-slate-800 uppercase tracking-tight">
+                      {viewTitles[view] || 'Projects'}
+                    </span>
+                    <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                      {ordered.length}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-3 w-full sm:w-auto">
+                    {/* Search (only shown on non-dashboard views where top bar search won't filter) */}
+                    {view !== 'dashboard' && (
+                      <div className="relative flex-1 sm:max-w-xs">
+                        <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        <input
+                          type="text"
+                          value={search}
+                          onChange={e => setSearch(e.target.value)}
+                          placeholder="Search projects..."
+                          className="w-full pl-9 pr-4 py-2 rounded-xl text-xs bg-slate-50 border border-slate-200 text-slate-700 outline-none focus:border-[#1E3A8A] focus:bg-white"
+                        />
+                      </div>
+                    )}
+
+                    {/* Sort */}
+                    <select
+                      value={sort}
+                      onChange={e => setSort(e.target.value as SortMode)}
+                      className="px-3 py-2 rounded-xl text-xs font-semibold bg-slate-50 border border-slate-200 text-slate-600 outline-none cursor-pointer focus:border-[#1E3A8A]"
+                    >
+                      <option value="newest">Newest First</option>
+                      <option value="oldest">Oldest First</option>
+                      <option value="name-asc">Name A–Z</option>
+                      <option value="name-desc">Name Z–A</option>
+                    </select>
+
+                    {/* New Project (Admin only, non-dashboard views) */}
+                    {user.role === 'ADMIN' && !isNotification && view !== 'dashboard' && (
+                      <button
+                        onClick={() => { setIsCompanyMode(false); setShowCreate(true); }}
+                        className="px-4 py-2 rounded-xl text-xs font-bold text-white hover:opacity-90 transition-all"
+                        style={{ background: '#1E3A8A' }}
+                      >
+                        + New Project
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Table */}
+                <div className="overflow-x-auto">
+                  {ordered.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-16 gap-3">
+                      <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center text-xl">
+                        📋
+                      </div>
+                      <div className="text-center">
+                        <p className="text-xs font-bold text-slate-600">No projects found</p>
+                        <p className="text-[11px] text-slate-400 mt-0.5">
+                          {user.role === 'ADMIN' ? 'Create a new project to get started' : 'No assignments yet'}
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <table className="w-full text-left border-collapse mt-2">
+                      <thead>
+                        <tr className="text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
+                          <th className="py-4 pl-4">Project / Client</th>
+                          <th className="py-4 text-center">Status</th>
+                          <th className="py-4 text-center">Date</th>
+                          <th className="py-4 pr-4 text-right"></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {ordered.map(project => {
+                          const isPinned = pinned.has(project.id);
+                          const isOpen = menuOpen === project.id;
+                          const statusBar = Object.entries(statusConfig).find(([key]) => project.status?.includes(key))?.[1]?.bar || '#64748B';
+
+                          return (
+                            <tr
+                              key={project.id}
+                              onClick={() => onSelectProject(project)}
+                              className="hover:bg-slate-50 cursor-pointer border-b border-slate-50 transition-colors"
+                            >
+                              <td className="py-4 pl-4 flex items-center gap-3">
+                                <div
+                                  className="w-1.5 h-8 rounded-full shrink-0"
+                                  style={{ background: statusBar }}
+                                />
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs font-bold text-slate-800">{project.name}</span>
+                                    {isPinned && (
+                                      <span className="text-[8px] font-extrabold px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 uppercase tracking-wide">
+                                        Pinned
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p className="text-[10px] text-slate-400 mt-0.5">
+                                    {project.clientName} · {project.location}
+                                  </p>
+                                </div>
+                              </td>
+                              <td className="py-4 text-center">
+                                <StatusBadge status={project.status} />
+                              </td>
+                              <td className="py-4 text-center text-xs font-semibold text-slate-500">
+                                {project.startDate || '—'}
+                              </td>
+                              <td className="py-4 pr-4 text-right relative" onClick={e => e.stopPropagation()}>
+                                <button
+                                  onClick={() => setMenuOpen(isOpen ? null : project.id)}
+                                  className="p-1.5 rounded-lg hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-all"
+                                >
+                                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h.01M12 12h.01M19 12h.01" />
+                                  </svg>
+                                </button>
+
+                                {isOpen && (
+                                  <>
+                                    <div className="fixed inset-0 z-20" onClick={() => setMenuOpen(null)} />
+                                    <div className="absolute right-4 top-10 z-30 w-40 rounded-xl bg-white border border-slate-200 py-1 shadow-lg text-left">
+                                      <button
+                                        onClick={() => { setEditProject(project); setMenuOpen(null); }}
+                                        className="w-full px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 hover:text-[#1E3A8A] flex items-center gap-1.5"
+                                      >
+                                        Edit Project
+                                      </button>
+                                      <button
+                                        onClick={() => handlePin(project.id)}
+                                        className="w-full px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 hover:text-[#1E3A8A] flex items-center gap-1.5"
+                                      >
+                                        {isPinned ? 'Unpin' : 'Pin Project'}
+                                      </button>
+                                      <button
+                                        onClick={() => onSelectProject(project)}
+                                        className="w-full px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 hover:text-[#1E3A8A] flex items-center gap-1.5"
+                                      >
+                                        View Details
+                                      </button>
+                                      <div className="border-t border-slate-100 my-1"></div>
+                                      <button
+                                        onClick={() => { setDeleteConfirm(project.id); setMenuOpen(null); }}
+                                        className="w-full px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 flex items-center gap-1.5"
+                                      >
+                                        Delete Project
+                                      </button>
+                                    </div>
+                                  </>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+
+              </div>
+            </div>
+          </>
+        )}
 
         {/* Modals */}
         {showCreate && (
           <CreateProjectModal
             onClose={() => setShowCreate(false)}
-            onCreate={p => { onCreateProject(p); setProjectList(prev => [...prev, p]); }}
+            onCreate={p => { onCreateProject(p, isCompanyMode); setProjectList(prev => [...prev, p]); }}
+            isCompanyMode={isCompanyMode}
           />
         )}
 

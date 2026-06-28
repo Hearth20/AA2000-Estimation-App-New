@@ -1,8 +1,10 @@
 import { useState } from 'react';
+import LeafletMap from '../utils/LeafletMap';
 
 interface Props {
   onSave: (data: SurveyFormData) => void;
   onExit: () => void;
+  initialCompanyName?: string;
 }
 
 export type SystemType =
@@ -34,6 +36,7 @@ export interface SurveyFormData {
   systemTypes: SystemType[];
   buildingType: string;
   floors: number;
+  startDate: string;
 }
 
 const SYSTEM_OPTIONS: { type: SystemType; label: string; icon: string; color: string; bg: string }[] = [
@@ -61,14 +64,14 @@ const BUILDING_TYPES = [
 
 const STEPS = [
   { label: 'Company & Project', icon: '🏢' },
-  { label: 'System Scope',      icon: '🛡️' },
+  { label: 'PROJECT NAME',      icon: '🛡️' },
   { label: 'Client Info',       icon: '👤' },
   { label: 'Location',          icon: '📍' },
 ];
 
-export default function CreateSurveyForm({ onSave, onExit }: Props) {
+export default function CreateSurveyForm({ onSave, onExit, initialCompanyName = '' }: Props) {
   const [form, setForm] = useState<SurveyFormData>({
-    companyName: '',
+    companyName: initialCompanyName,
     projectName: '',
     clientEmail: '',
     clientName: '',
@@ -80,6 +83,7 @@ export default function CreateSurveyForm({ onSave, onExit }: Props) {
     systemTypes: [],
     buildingType: '',
     floors: 1,
+    startDate: new Date().toISOString().split('T')[0],
   });
 
   const toggleSystemType = (type: SystemType) => {
@@ -91,22 +95,10 @@ export default function CreateSurveyForm({ onSave, onExit }: Props) {
     }));
   };
   const [mapClicked, setMapClicked] = useState(false);
-  const [mapPin, setMapPin] = useState<{ x: number; y: number } | null>(null);
   const [step, setStep] = useState(0);
 
   const update = (field: keyof SurveyFormData, value: string) => {
     setForm(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleMapClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width;
-    const y = (e.clientY - rect.top) / rect.height;
-    const lat = 14.8 - y * 0.4;
-    const lng = 120.8 + x * 0.4;
-    setForm(prev => ({ ...prev, latitude: parseFloat(lat.toFixed(4)), longitude: parseFloat(lng.toFixed(4)) }));
-    setMapClicked(true);
-    setMapPin({ x: (e.clientX - rect.left), y: (e.clientY - rect.top) });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -153,7 +145,7 @@ export default function CreateSurveyForm({ onSave, onExit }: Props) {
     <div className="min-h-screen flex flex-col" style={{ background: '#F4F6FA' }}>
       {/* Header */}
       <header className="px-6 py-4 bg-white" style={{ borderBottom: '1px solid #E5E7EB' }}>
-        <div className="max-w-3xl mx-auto">
+        <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
               <div
@@ -206,7 +198,7 @@ export default function CreateSurveyForm({ onSave, onExit }: Props) {
 
       {/* Form Content */}
       <div className="flex-1 overflow-y-auto py-8">
-        <form onSubmit={handleSubmit} className="max-w-3xl mx-auto px-6">
+        <form onSubmit={handleSubmit} className="max-w-7xl mx-auto px-6">
 
           {/* Step 0: Company & Project */}
           {step === 0 && (
@@ -215,20 +207,29 @@ export default function CreateSurveyForm({ onSave, onExit }: Props) {
                 🏢 COMPANY & PROJECT DETAILS
               </p>
               <div className="space-y-4">
-                <div>
-                  <label style={labelStyle}>Company Name</label>
-                  <input value={form.companyName} onChange={e => update('companyName', e.target.value)} style={inputStyle} placeholder="e.g. ABC Corporation Philippines" required />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
+                {!initialCompanyName && (
                   <div>
-                    <label style={labelStyle}>Project Name</label>
-                    <input value={form.projectName} onChange={e => update('projectName', e.target.value)} style={inputStyle} placeholder="e.g. Headquarters CCTV Install" required />
+                    <label style={labelStyle}>Company Name</label>
+                    <input value={form.companyName} onChange={e => update('companyName', e.target.value)} style={inputStyle} placeholder="e.g. ABC Corporation Philippines" required />
                   </div>
+                )}
+                <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label style={labelStyle}>Location Name / Area</label>
                     <input value={form.locationName} onChange={e => update('locationName', e.target.value)} style={inputStyle} placeholder="e.g. Makati City, Manila" required />
                   </div>
+                  <div>
+                    <label style={labelStyle}>Survey Schedule Date</label>
+                    <input
+                      type="date"
+                      value={form.startDate}
+                      onChange={e => update('startDate', e.target.value)}
+                      style={inputStyle}
+                      required
+                    />
+                  </div>
                 </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label style={labelStyle}>Building Type</label>
@@ -244,19 +245,33 @@ export default function CreateSurveyForm({ onSave, onExit }: Props) {
                       value={form.floors}
                       onChange={e => setForm(prev => ({ ...prev, floors: Number(e.target.value) }))}
                       style={inputStyle}
+                      required
                     />
                   </div>
                 </div>
-              </div>
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Step 1: System Scope — THE KEY STEP */}
+          {/* Step 1: Project & Systems */}
           {step === 1 && (
             <div style={sectionStyle}>
-              <p className="text-[10px] font-bold uppercase tracking-wider mb-1 text-[#1D4ED8]">
-                🛡️ SYSTEM TYPES TO INSTALL
+              <p className="text-[10px] font-bold uppercase tracking-wider mb-4 text-[#1D4ED8]">
+                🛡️ PROJECT NAME & SYSTEM TYPES
               </p>
+              
+              {/* Project Name field */}
+              <div className="mb-6">
+                <label style={labelStyle}>Project Name</label>
+                <input
+                  value={form.projectName}
+                  onChange={e => update('projectName', e.target.value)}
+                  style={inputStyle}
+                  placeholder="e.g. Headquarters CCTV Install"
+                  required
+                />
+              </div>
+
               <p className="text-xs text-slate-400 font-semibold mb-5">Select all systems that apply — the AI will generate the correct equipment list for each.</p>
               <div className="grid grid-cols-2 gap-3">
                 {SYSTEM_OPTIONS.map(opt => {
@@ -339,43 +354,20 @@ export default function CreateSurveyForm({ onSave, onExit }: Props) {
                   {form.latitude}, {form.longitude}
                 </span>
               </div>
-              <div
-                onClick={handleMapClick}
-                className="relative w-full rounded-2xl cursor-crosshair overflow-hidden"
-                style={{
-                  height: '240px',
-                  background: '#F8FAFC',
-                  border: '1px solid #E2E8F0',
-                  backgroundImage: `
-                    linear-gradient(rgba(30,58,138,0.03) 1px, transparent 1px),
-                    linear-gradient(90deg, rgba(30,58,138,0.03) 1px, transparent 1px)
-                  `,
-                  backgroundSize: '24px 24px',
+              <LeafletMap
+                onLocationSelect={(lat, lng, address) => {
+                  setForm(prev => ({
+                    ...prev,
+                    latitude: parseFloat(lat.toFixed(4)),
+                    longitude: parseFloat(lng.toFixed(4)),
+                    locationName: address,
+                  }));
+                  setMapClicked(true);
                 }}
-              >
-                {mapClicked && mapPin ? (
-                  <div
-                    className="absolute"
-                    style={{ left: mapPin.x - 8, top: mapPin.y - 20 }}
-                  >
-                    <div
-                      className="w-4 h-4 rounded-full border-2"
-                      style={{ background: '#1E3A8A', borderColor: '#fff', boxShadow: '0 0 8px rgba(30,58,138,0.3)' }}
-                    />
-                    <div
-                      className="w-0.5 h-3 mx-auto"
-                      style={{ background: '#1E3A8A' }}
-                    />
-                  </div>
-                ) : (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-                    <div className="w-9 h-9 rounded-full flex items-center justify-center bg-blue-50 text-[#1E3A8A]">
-                      📍
-                    </div>
-                    <p className="text-xs font-bold text-slate-400">Click anywhere to place coordinate marker</p>
-                  </div>
-                )}
-              </div>
+                initialLat={form.latitude}
+                initialLng={form.longitude}
+                height="240px"
+              />
             </div>
           )}
 

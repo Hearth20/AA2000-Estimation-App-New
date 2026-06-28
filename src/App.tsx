@@ -28,6 +28,8 @@ export interface Project {
   clientPhone?: string;
   location: string;
   locationName?: string;
+  latitude?: number;
+  longitude?: number;
   buildingType?: string;
   floors?: number;
   systemTypes?: string[];   // e.g. ['CCTV', 'FDAS', 'ACCESS_CONTROL']
@@ -122,6 +124,8 @@ export default function App() {
   const [currentSurveyType, setCurrentSurveyType] = useState<SurveyType | null>(null);
   const [projects, setProjects] = useState<Project[]>(() => loadFromStorage<Project[]>(STORAGE_KEYS.projects, []));
   const [notifications, setNotifications] = useState<Notification[]>(() => loadFromStorage<Notification[]>(STORAGE_KEYS.notifications, defaultNotifications));
+  const [prefilledCompanyName, setPrefilledCompanyName] = useState<string>('');
+  const [currentCompanyProject, setCurrentCompanyProject] = useState<Project | null>(null);
 
   useEffect(() => {
     const saved = loadFromStorage<User | null>(STORAGE_KEYS.user, null);
@@ -157,10 +161,12 @@ export default function App() {
     localStorage.removeItem(STORAGE_KEYS.user);
   }, []);
 
-  const handleCreateProject = useCallback((project: Project) => {
+  const handleCreateProject = useCallback((project: Project, keepOnHome?: boolean) => {
     setProjects(prev => [...prev, project]);
-    setCurrentProject(project);
-    setScreen('project-detail');
+    if (!keepOnHome) {
+      setCurrentProject(project);
+      setScreen('project-detail');
+    }
   }, []);
 
   const handleSelectProject = useCallback((project: Project) => {
@@ -194,7 +200,8 @@ export default function App() {
     setScreen('dashboard');
   }, []);
 
-  const handleNavigateToCreate = useCallback(() => {
+  const handleNavigateToCreate = useCallback((companyName?: string) => {
+    setPrefilledCompanyName(companyName || '');
     setScreen('create-survey');
   }, []);
 
@@ -208,20 +215,39 @@ export default function App() {
       clientPhone: data.clientContactNumber,
       location: data.locationName,
       locationName: data.locationName,
+      latitude: data.latitude,
+      longitude: data.longitude,
       buildingType: data.buildingType,
       floors: data.floors,
       systemTypes: data.systemTypes,
       surveyScope: data.surveyScope,
       status: 'Pending',
+      startDate: data.startDate,
       assignedTechnicians: [],
       createdAt: now,
     };
-    setProjects(prev => [...prev, newProject]);
-    setCurrentProject(newProject);
-    setScreen('project-detail');
-  }, []);
+
+    const compName = prefilledCompanyName;
+    setPrefilledCompanyName('');
+
+    setProjects(prev => {
+      const nextProjects = [...prev, newProject];
+      if (compName) {
+        const compProj = nextProjects.find(p => p.name === compName || p.clientName === compName);
+        if (compProj) {
+          setCurrentCompanyProject(compProj);
+        }
+        setScreen('dashboard');
+      } else {
+        setCurrentProject(newProject);
+        setScreen('project-detail');
+      }
+      return nextProjects;
+    });
+  }, [prefilledCompanyName]);
 
   const handleExitCreateSurvey = useCallback(() => {
+    setPrefilledCompanyName('');
     setScreen('dashboard');
   }, []);
 
@@ -243,9 +269,11 @@ export default function App() {
             onCreateProject={handleCreateProject}
             onSettings={handleSettings}
             onNavigateToCreate={handleNavigateToCreate}
+            selectedCompanyProject={currentCompanyProject}
+            setSelectedCompanyProject={setCurrentCompanyProject}
           />
           <div className="fixed inset-0 z-50 overflow-y-auto" style={{ background: '#F4F6FA' }}>
-            <CreateSurveyForm onSave={handleSaveSurvey} onExit={handleExitCreateSurvey} />
+            <CreateSurveyForm onSave={handleSaveSurvey} onExit={handleExitCreateSurvey} initialCompanyName={prefilledCompanyName} />
           </div>
         </div>
       </ErrorBoundary>
@@ -311,6 +339,8 @@ export default function App() {
         onCreateProject={handleCreateProject}
         onSettings={handleSettings}
         onNavigateToCreate={handleNavigateToCreate}
+        selectedCompanyProject={currentCompanyProject}
+        setSelectedCompanyProject={setCurrentCompanyProject}
       />
     </ErrorBoundary>
   );

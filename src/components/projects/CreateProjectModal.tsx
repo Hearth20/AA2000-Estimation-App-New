@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import type { Project } from '../../App';
+import LeafletMap from '../utils/LeafletMap';
 
 interface Props {
   onClose: () => void;
   onCreate: (project: Project) => void;
+  isCompanyMode?: boolean;
 }
 
-export default function CreateProjectModal({ onClose, onCreate }: Props) {
+export default function CreateProjectModal({ onClose, onCreate, isCompanyMode = false }: Props) {
   const [name, setName] = useState('');
   const [client, setClient] = useState('');
   const [email, setEmail] = useState('');
@@ -14,6 +16,11 @@ export default function CreateProjectModal({ onClose, onCreate }: Props) {
   const [location, setLocation] = useState('');
   const [buildingType, setBuildingType] = useState('Office');
   const [floors, setFloors] = useState(1);
+
+  // Map coordinate selection states
+  const [mapClicked, setMapClicked] = useState(false);
+  const [latitude, setLatitude] = useState(14.5995);
+  const [longitude, setLongitude] = useState(120.9842);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,8 +31,10 @@ export default function CreateProjectModal({ onClose, onCreate }: Props) {
       clientEmail: email,
       clientPhone: phone,
       location,
-      buildingType,
-      floors,
+      latitude: mapClicked ? latitude : undefined,
+      longitude: mapClicked ? longitude : undefined,
+      buildingType: isCompanyMode ? 'Other' : buildingType,
+      floors: isCompanyMode ? 1 : floors,
       status: 'Pending',
       startDate: new Date().toISOString().split('T')[0],
       assignedTechnicians: [],
@@ -58,7 +67,7 @@ export default function CreateProjectModal({ onClose, onCreate }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-      <div className="w-full max-w-lg bg-white rounded-3xl border border-slate-100 shadow-xl overflow-hidden">
+      <div className="w-full max-w-lg bg-white rounded-3xl border border-slate-100 shadow-xl overflow-y-auto max-h-[90vh]">
         
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-slate-100">
@@ -67,21 +76,25 @@ export default function CreateProjectModal({ onClose, onCreate }: Props) {
               📁
             </div>
             <div>
-              <h2 className="text-base font-black text-slate-800">Create New Project</h2>
-              <p className="text-[10px] font-bold text-slate-400">Initialize a new site survey project</p>
+              <h2 className="text-base font-black text-slate-800">
+                {isCompanyMode ? 'Create New Company' : 'Create New Project'}
+              </h2>
+              <p className="text-[10px] font-bold text-slate-400">
+                {isCompanyMode ? 'Initialize a new site survey company' : 'Initialize a new site survey project'}
+              </p>
             </div>
           </div>
           <button onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:text-slate-600 transition-colors">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
         </div>
-
+ 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label style={labelStyle}>Project Name</label>
-              <input value={name} onChange={e => setName(e.target.value)} style={inputStyle} placeholder="e.g. BGC CCTV Site Survey" required />
+              <label style={labelStyle}>{isCompanyMode ? 'Company Name' : 'Project Name'}</label>
+              <input value={name} onChange={e => setName(e.target.value)} style={inputStyle} placeholder={isCompanyMode ? "e.g. MegaCorp Office Survey" : "e.g. BGC CCTV Site Survey"} required />
             </div>
             <div>
               <label style={labelStyle}>Company / Client Name</label>
@@ -101,28 +114,53 @@ export default function CreateProjectModal({ onClose, onCreate }: Props) {
           </div>
 
           <div>
-            <label style={labelStyle}>Project Location Address</label>
+            <label style={labelStyle}>{isCompanyMode ? 'Company Location Address' : 'Project Location Address'}</label>
             <input value={location} onChange={e => setLocation(e.target.value)} style={inputStyle} placeholder="e.g. 5th Ave, Taguig, Metro Manila" required />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label style={labelStyle}>Building Type</label>
-              <select value={buildingType} onChange={e => setBuildingType(e.target.value)} style={{ ...inputStyle, cursor: 'pointer' }}>
-                <option>Office</option>
-                <option>Retail</option>
-                <option>Warehouse</option>
-                <option>School</option>
-                <option>Hospital</option>
-                <option>Residential</option>
-                <option>Other</option>
-              </select>
+          {/* Map Pin selection */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label style={labelStyle}>Map Location Pin</label>
+              {mapClicked && (
+                <span className="font-mono text-[10px] font-bold text-slate-600 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded">
+                  {latitude.toFixed(4)}, {longitude.toFixed(4)}
+                </span>
+              )}
             </div>
-            <div>
-              <label style={labelStyle}>Number of Floors</label>
-              <input type="number" min={1} value={floors} onChange={e => setFloors(Number(e.target.value))} style={inputStyle} required />
-            </div>
+            <LeafletMap
+              onLocationSelect={(lat, lng, address) => {
+                setLatitude(lat);
+                setLongitude(lng);
+                setLocation(address);
+                setMapClicked(true);
+              }}
+              initialLat={latitude}
+              initialLng={longitude}
+              height="160px"
+            />
           </div>
+
+          {!isCompanyMode && (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label style={labelStyle}>Building Type</label>
+                <select value={buildingType} onChange={e => setBuildingType(e.target.value)} style={{ ...inputStyle, cursor: 'pointer' }}>
+                  <option>Office</option>
+                  <option>Retail</option>
+                  <option>Warehouse</option>
+                  <option>School</option>
+                  <option>Hospital</option>
+                  <option>Residential</option>
+                  <option>Other</option>
+                </select>
+              </div>
+              <div>
+                <label style={labelStyle}>Number of Floors</label>
+                <input type="number" min={1} value={floors} onChange={e => setFloors(Number(e.target.value))} style={inputStyle} required />
+              </div>
+            </div>
+          )}
 
           <div className="flex gap-2 pt-2 border-t border-slate-50">
             <button type="button" onClick={onClose} className="flex-1 py-2.5 rounded-xl text-xs font-bold bg-slate-50 text-slate-600 border border-slate-200">
@@ -133,11 +171,10 @@ export default function CreateProjectModal({ onClose, onCreate }: Props) {
               className="flex-1 py-2.5 rounded-xl text-xs font-bold text-white transition-all shadow-sm"
               style={{ background: '#1E3A8A' }}
             >
-              Create Project
+              {isCompanyMode ? 'Create Company' : 'Create Project'}
             </button>
           </div>
         </form>
-
       </div>
     </div>
   );

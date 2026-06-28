@@ -112,6 +112,31 @@ interface Props {
 }
 
 export default function ProjectDetail({ user: _user, project, onBack, onStartSurvey, onViewEstimation }: Props) {
+  const activeSurveyTypes = React.useMemo(() => {
+    if (!project.systemTypes || project.systemTypes.length === 0) {
+      return SURVEY_TYPES;
+    }
+
+    return SURVEY_TYPES.filter(st => {
+      return project.systemTypes?.some(sys => {
+        if (st.key === 'CCTV' && sys === 'CCTV') return true;
+        if (st.key === 'FIRE_ALARM' && sys === 'FDAS') return true;
+        if (st.key === 'ACCESS_CONTROL' && sys === 'ACCESS_CONTROL') return true;
+        if (st.key === 'BURGLAR_ALARM' && sys === 'BURGLAR_ALARM') return true;
+        if (st.key === 'FIRE_PROTECTION' && sys === 'FIRE_PROTECTION') return true;
+        
+        if (st.key === 'OTHER') {
+          const otherTypes = [
+            'DOOR_LOCK', 'EAS_SYSTEM', 'FIXED_ARM_ELEVATOR', 'INTERCOM_NURSE_CALL',
+            'PABX_PAGING', 'PARKING_BARRIER', 'POS_SYSTEM', 'ROOM_ALERT', 'XRAY_SECURITY'
+          ];
+          return otherTypes.includes(sys);
+        }
+        return false;
+      });
+    });
+  }, [project.systemTypes]);
+
   return (
     <div className="min-h-screen pb-12" style={{ background: '#F4F6FA' }}>
       {/* Header */}
@@ -121,7 +146,7 @@ export default function ProjectDetail({ user: _user, project, onBack, onStartSur
           borderBottom: '1px solid #E5E7EB',
         }}
       >
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
           <button
             onClick={onBack}
             className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-50 transition-colors"
@@ -138,7 +163,7 @@ export default function ProjectDetail({ user: _user, project, onBack, onStartSur
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-6 py-8">
+      <main className="max-w-7xl mx-auto px-6 py-8">
         {/* Hero card */}
         <div
           className="rounded-3xl p-6 mb-8 bg-white border border-slate-100 shadow-sm relative overflow-hidden"
@@ -222,11 +247,11 @@ export default function ProjectDetail({ user: _user, project, onBack, onStartSur
             <span
               className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500"
             >
-              6 categories
+              {activeSurveyTypes.length} {activeSurveyTypes.length === 1 ? 'category' : 'categories'}
             </span>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            {SURVEY_TYPES.map(st => (
+            {activeSurveyTypes.map(st => (
               <button
                 key={st.key}
                 onClick={() => onStartSurvey(st.key)}

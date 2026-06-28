@@ -2,7 +2,7 @@ import React from 'react';
 import type { User } from '../../App';
 
 type View =
-  | 'dashboard' | 'workspace' | 'create-survey'
+  | 'home' | 'dashboard' | 'workspace' | 'create-survey'
   | 'todo' | 'assignment' | 'missing' | 'done' | 'history'
   | 'approval' | 'finalize'
   | 'ongoing' | 'upcoming' | 'missing-notif' | 'approval-notif' | 'finalize-notif';
@@ -16,9 +16,14 @@ interface Props {
 }
 
 const navIcons: Record<string, React.ReactNode> = {
-  dashboard: (
+  home: (
     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+    </svg>
+  ),
+  dashboard: (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2v-4zM14 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2v-4z" />
     </svg>
   ),
   workspace: (
@@ -95,6 +100,7 @@ export default function Sidebar({ user, currentView, onNavigate, onLogout, onSet
     {
       label: 'SURVEYS',
       items: [
+        { view: 'home', label: 'Home' },
         { view: 'dashboard', label: 'Dashboard' },
         { view: 'workspace', label: 'Workspace' },
         ...(isAdmin ? [{ view: 'create-survey' as View, label: 'New Survey', accent: '#10B981' }] : []),
@@ -172,7 +178,7 @@ export default function Sidebar({ user, currentView, onNavigate, onLogout, onSet
           <div className="min-w-0">
             <p className="text-xs font-bold truncate" style={{ color: '#1E293B' }}>{user.fullName || user.email}</p>
             <p className="text-[10px]" style={{ color: '#64748B' }}>
-              {isAdmin ? 'Administrator' : 'Technician'}
+              {user.role === 'ADMIN' ? 'Administrator' : user.role === 'SALES' ? 'Sales Representative' : 'Technician'}
             </p>
           </div>
         </div>
