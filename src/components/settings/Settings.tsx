@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import type { User } from '../../App';
+import NotificationBell from '../notifications/NotificationBell';
+import type { Notification } from '../notifications/NotificationBell';
 
 interface Props {
   user: User;
   onBack: () => void;
   onLogout?: () => void;
+  notifications?: Notification[];
 }
 
 type SettingsTab = 'account' | 'position' | 'userid' | 'privacy' | 'help' | 'accessibility';
@@ -89,7 +92,7 @@ function Toggle({ defaultOn = false }: { defaultOn?: boolean }) {
   );
 }
 
-export default function Settings({ user, onBack, onLogout }: Props) {
+export default function Settings({ user, onBack, onLogout, notifications = [] }: Props) {
   const [tab, setTab] = useState<SettingsTab>('account');
 
   const isAdmin = user.role === 'ADMIN';
@@ -107,7 +110,7 @@ export default function Settings({ user, onBack, onLogout }: Props) {
   };
 
   return (
-    <div className="min-h-screen flex bg-[#F4F6FA]">
+    <div className="flex h-screen overflow-hidden bg-[#F4F6FA] w-full">
       {/* Settings sidebar */}
       <aside
         className="w-64 shrink-0 flex flex-col h-screen sticky top-0 bg-white"
@@ -185,13 +188,66 @@ export default function Settings({ user, onBack, onLogout }: Props) {
         )}
       </aside>
 
-      {/* Main content */}
-      <main className="flex-1 px-8 py-8 overflow-y-auto">
-        <h2 className="text-lg font-black mb-6 text-slate-800 uppercase tracking-tight">
-          {tabs.find(t => t.key === tab)?.label}
-        </h2>
+      {/* Main content wrapper */}
+      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
+        {/* Top Header Bar */}
+        <div
+          className="px-8 py-4 flex items-center justify-between shrink-0 bg-white w-full"
+          style={{ borderBottom: '1px solid #E5E7EB' }}
+        >
+          {/* App status */}
+          <div className="flex items-center gap-2 bg-[#F4F6FA] border border-[#E5E7EB] rounded-full px-3 py-1.5">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <span className="text-[9px] font-bold text-emerald-800 tracking-wider">SYSTEM ONLINE</span>
+          </div>
 
-        <div className="max-w-xl">
+          <div className="flex items-center gap-6">
+            {/* Search */}
+            <div className="relative w-64">
+              <input
+                type="text"
+                placeholder="SEARCH PROJECTS OR CLIENTS..."
+                className="w-full pl-9 pr-4 py-2 rounded-full text-[10px] tracking-wider font-bold bg-[#F4F6FA] border border-[#E5E7EB] outline-none text-[#1E293B]"
+                onClick={onBack}
+                readOnly
+              />
+              <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#94A3B8]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+
+            {/* Notification & User */}
+            <div className="flex items-center gap-3">
+              <NotificationBell notifications={notifications} onViewAll={onBack} />
+
+              <button
+                onClick={onBack}
+                className="p-2 rounded-full hover:bg-slate-100 transition-colors text-slate-500"
+                title="Back to Dashboard"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </button>
+
+              <div className="w-8 h-8 rounded-full bg-[#1E3A8A] text-white flex items-center justify-center font-bold text-xs">
+                {initials}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Main content */}
+        <main className="flex-1 px-8 py-8 overflow-y-auto">
+          <h2 className="text-lg font-black mb-6 text-slate-800 uppercase tracking-tight">
+            {tabs.find(t => t.key === tab)?.label}
+          </h2>
+
+          <div className="w-full">
           {/* Account Info */}
           {tab === 'account' && (
             <div>
@@ -308,8 +364,9 @@ export default function Settings({ user, onBack, onLogout }: Props) {
               ))}
             </div>
           )}
-        </div>
-      </main>
+          </div>
+        </main>
+      </div>
     </div>
   );
 }

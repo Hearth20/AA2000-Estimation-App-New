@@ -391,7 +391,7 @@ export default function App() {
   if (screen === 'settings') {
     return (
       <ErrorBoundary>
-        <Settings user={user} onBack={handleBackFromSettings} onLogout={handleLogout} />
+        <Settings user={user} onBack={handleBackFromSettings} onLogout={handleLogout} notifications={notifications} />
       </ErrorBoundary>
     );
   }
