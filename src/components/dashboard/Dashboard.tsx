@@ -21,6 +21,7 @@ interface Props {
   setSelectedCompanyProject: (project: Project | null) => void;
   onMarkNotificationsAsRead?: (type: string) => void;
   onDeleteProject?: (projectId: string) => void;
+  onUpdateProject?: (project: Project) => void;
 }
 
 type SortMode = 'newest' | 'oldest' | 'name-asc' | 'name-desc';
@@ -120,6 +121,7 @@ export default function Dashboard({
   setSelectedCompanyProject,
   onMarkNotificationsAsRead,
   onDeleteProject,
+  onUpdateProject,
 }: Props) {
   const [view, setView] = useState<View>('home');
   const [showCreate, setShowCreate] = useState(false);
@@ -243,7 +245,11 @@ export default function Dashboard({
     setDeleteConfirm(null);
     setMenuOpen(null);
   };
-  const handleSaveEdit = (updated: Project) => { setProjectList(prev => prev.map(p => p.id === updated.id ? updated : p)); setEditProject(null); };
+  const handleSaveEdit = (updated: Project) => {
+    setProjectList(prev => prev.map(p => p.id === updated.id ? updated : p));
+    if (onUpdateProject) onUpdateProject(updated);
+    setEditProject(null);
+  };
   const handlePin = (id: string) => { setPinned(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; }); setMenuOpen(null); };
 
   const navigate = (v: View) => {
@@ -345,6 +351,8 @@ export default function Dashboard({
             }}
             onSelectProject={onSelectProject}
             onNewCompanyClick={() => { setIsCompanyMode(true); setShowCreate(true); }}
+            onDeleteProject={handleDelete}
+            onUpdateProject={handleSaveEdit}
           />
         ) : (
           <>
@@ -736,7 +744,7 @@ export default function Dashboard({
                       >
                         Missing Alerts ({countMissing})
                       </button>
-                      {user.role === 'ADMIN' && (
+                      {(user.role === 'ADMIN' || user.role === 'TECHNICIAN' || user.role === 'SALES') && (
                         <>
                           <button
                             onClick={() => setActiveNotifTab('approval')}

@@ -46,7 +46,7 @@ export default function CompanyDetail({
   onDeleteProject,
 }: Props) {
   const isAdmin = user.role === 'ADMIN';
-  const [activeTab, setActiveTab] = useState<'assignments' | 'missing' | 'complete'>('assignments');
+  const [activeTab, setActiveTab] = useState<'assignments' | 'missing' | 'approval' | 'finalize' | 'complete'>('assignments');
 
   // Find all projects/surveys belonging to this company name
   const companyProjects = useMemo(() => {
@@ -67,8 +67,12 @@ export default function CompanyDetail({
           const isMissed = !p.startDate || p.startDate < today;
           return isNotComplete && isMissed;
         });
+      case 'approval':
+        return companyProjects.filter(p => p.status === 'Finalized');
+      case 'finalize':
+        return companyProjects.filter(p => p.status === 'Finalized - Approved' || p.status === 'Finalized - Rejected');
       case 'complete':
-        return companyProjects.filter(p => p.status === 'Completed' || p.status?.includes('Finalized'));
+        return companyProjects.filter(p => p.status === 'Completed');
       case 'assignments':
       default:
         return companyProjects.filter(p => {
@@ -97,8 +101,16 @@ export default function CompanyDetail({
     }).length;
   }, [companyProjects]);
 
+  const countApproval = useMemo(() => {
+    return companyProjects.filter(p => p.status === 'Finalized').length;
+  }, [companyProjects]);
+
+  const countFinalize = useMemo(() => {
+    return companyProjects.filter(p => p.status === 'Finalized - Approved' || p.status === 'Finalized - Rejected').length;
+  }, [companyProjects]);
+
   const countComplete = useMemo(() => {
-    return companyProjects.filter(p => p.status === 'Completed' || p.status?.includes('Finalized')).length;
+    return companyProjects.filter(p => p.status === 'Completed').length;
   }, [companyProjects]);
 
   return (
@@ -192,6 +204,26 @@ export default function CompanyDetail({
               }`}
             >
               Missing ({countMissing})
+            </button>
+            <button
+              onClick={() => setActiveTab('approval')}
+              className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all px-2 ${
+                activeTab === 'approval'
+                  ? 'border-[#7C3AED] text-[#7C3AED]'
+                  : 'border-transparent text-slate-400 hover:text-slate-600'
+              }`}
+            >
+              Approval Pipeline ({countApproval})
+            </button>
+            <button
+              onClick={() => setActiveTab('finalize')}
+              className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all px-2 ${
+                activeTab === 'finalize'
+                  ? 'border-[#059669] text-[#059669]'
+                  : 'border-transparent text-slate-400 hover:text-slate-600'
+              }`}
+            >
+              Finalize Review ({countFinalize})
             </button>
             <button
               onClick={() => setActiveTab('complete')}

@@ -155,7 +155,7 @@ export default function Sidebar({ user, currentView, onNavigate, onLogout, onSet
         { view: 'ongoing', label: 'Ongoing Surveys', accent: '#2563EB' },
         { view: 'upcoming', label: 'Upcoming Surveys', accent: '#10B981' },
         { view: 'missing-notif', label: 'Missing Alerts', accent: '#F59E0B' },
-        ...(isAdmin
+        ...((isAdmin || user.role === 'TECHNICIAN' || user.role === 'SALES')
           ? [
               { view: 'approval-notif' as View, label: 'Approval Alerts', accent: '#4F46E5' },
               { view: 'finalize-notif' as View, label: 'Finalize Alerts', accent: '#10B981' },
@@ -170,7 +170,6 @@ export default function Sidebar({ user, currentView, onNavigate, onLogout, onSet
         { view: 'home', label: 'Home' },
         { view: 'dashboard', label: 'Dashboard' },
         { view: 'workspace', label: 'Workspace' },
-        ...(isAdmin ? [{ view: 'create-survey' as View, label: 'New Survey', accent: '#10B981' }] : []),
         { view: 'assignment', label: 'All Projects', accent: '#2563EB' },
         { view: 'missing', label: 'Missing Specs', accent: '#F59E0B' },
       ],
@@ -178,7 +177,7 @@ export default function Sidebar({ user, currentView, onNavigate, onLogout, onSet
     {
       label: 'WORKFLOW',
       items: [
-        ...(isAdmin
+        ...((isAdmin || user.role === 'TECHNICIAN' || user.role === 'SALES')
           ? [
               { view: 'approval' as View, label: 'Approval Pipeline', accent: '#4F46E5' },
               { view: 'finalize' as View, label: 'Finalize Review', accent: '#10B981' },

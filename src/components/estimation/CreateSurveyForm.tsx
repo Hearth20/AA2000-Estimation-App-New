@@ -75,7 +75,7 @@ export default function CreateSurveyForm({ onSave, onExit, initialCompanyName = 
     projectName: '',
     clientEmail: '',
     clientName: '',
-    clientContactNumber: '',
+    clientContactNumber: '+63',
     locationName: '',
     latitude: 14.5995,
     longitude: 120.9842,
@@ -98,7 +98,23 @@ export default function CreateSurveyForm({ onSave, onExit, initialCompanyName = 
   const [step, setStep] = useState(0);
 
   const update = (field: keyof SurveyFormData, value: string) => {
-    setForm(prev => ({ ...prev, [field]: value }));
+    let finalValue = value;
+    if (field === 'clientContactNumber') {
+      if (!value.startsWith('+63')) {
+        if (value.length < 3) {
+          finalValue = '+63';
+        } else {
+          if (value.startsWith('0')) {
+            finalValue = '+63' + value.slice(1);
+          } else if (value.startsWith('9')) {
+            finalValue = '+63' + value;
+          } else {
+            finalValue = '+63' + value.replace(/^\+?(63)?/, '');
+          }
+        }
+      }
+    }
+    setForm(prev => ({ ...prev, [field]: finalValue }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {

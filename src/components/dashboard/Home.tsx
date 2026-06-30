@@ -7,6 +7,8 @@ interface HomeProps {
   onSelectProject: (project: Project) => void;
   onSelectCompany: (companyName: string) => void;
   onNewCompanyClick: () => void;
+  onDeleteProject?: (projectId: string) => void;
+  onUpdateProject?: (project: Project) => void;
 }
 
 type SortMode = 'newest' | 'oldest' | 'name-asc' | 'name-desc';
@@ -32,7 +34,7 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-export default function Home({ user, projects, onSelectProject, onSelectCompany, onNewCompanyClick }: HomeProps) {
+export default function Home({ user, projects, onSelectProject, onSelectCompany, onNewCompanyClick, onDeleteProject, onUpdateProject }: HomeProps) {
   const isAdmin = user.role === 'ADMIN';
   const isSales = user.role === 'SALES';
   const isTechnician = user.role === 'TECHNICIAN';
@@ -138,12 +140,18 @@ export default function Home({ user, projects, onSelectProject, onSelectCompany,
 
   const handleDelete = (id: string) => {
     setProjectList(prev => prev.filter(p => p.id !== id));
+    if (onDeleteProject) {
+      onDeleteProject(id);
+    }
     setDeleteConfirm(null);
     setMenuOpen(null);
   };
 
   const handleSaveEdit = (updated: Project) => {
     setProjectList(prev => prev.map(p => (p.id === updated.id ? updated : p)));
+    if (onUpdateProject) {
+      onUpdateProject(updated);
+    }
     setEditProject(null);
   };
 

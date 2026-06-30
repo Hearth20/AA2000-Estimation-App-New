@@ -267,6 +267,15 @@ export default function App() {
     setCurrentProject(prev => prev && prev.id === projectId ? { ...prev, status } : prev);
   }, []);
 
+  const handleUpdateProject = useCallback((updatedProject: Project) => {
+    setProjects(prev =>
+      prev.map(p =>
+        p.id === updatedProject.id ? updatedProject : p
+      )
+    );
+    setCurrentProject(prev => prev && prev.id === updatedProject.id ? updatedProject : prev);
+  }, []);
+
   const handleViewEstimation = useCallback(() => {
     setScreen('estimation');
   }, []);
@@ -369,6 +378,7 @@ export default function App() {
             setSelectedCompanyProject={setCurrentCompanyProject}
             onMarkNotificationsAsRead={handleMarkNotificationsAsRead}
             onDeleteProject={handleDeleteProject}
+            onUpdateProject={handleUpdateProject}
           />
           <div className="fixed inset-0 z-50 overflow-y-auto" style={{ background: '#F4F6FA' }}>
             <CreateSurveyForm onSave={handleSaveSurvey} onExit={handleExitCreateSurvey} initialCompanyName={prefilledCompanyName} />
@@ -454,6 +464,7 @@ export default function App() {
         setSelectedCompanyProject={setCurrentCompanyProject}
         onMarkNotificationsAsRead={handleMarkNotificationsAsRead}
         onDeleteProject={handleDeleteProject}
+        onUpdateProject={handleUpdateProject}
       />
     </ErrorBoundary>
   );

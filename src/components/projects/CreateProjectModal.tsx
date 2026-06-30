@@ -13,10 +13,28 @@ export default function CreateProjectModal({ onClose, onCreate, isCompanyMode = 
   const [name, setName] = useState('');
   const [client, setClient] = useState('');
   const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
+  const [phone, setPhone] = useState('+63');
   const [location, setLocation] = useState('');
   const [buildingType, setBuildingType] = useState('Office');
   const [floors, setFloors] = useState(1);
+
+  const handlePhoneChange = (val: string) => {
+    if (!val.startsWith('+63')) {
+      if (val.length < 3) {
+        setPhone('+63');
+      } else {
+        if (val.startsWith('0')) {
+          setPhone('+63' + val.slice(1));
+        } else if (val.startsWith('9')) {
+          setPhone('+63' + val);
+        } else {
+          setPhone('+63' + val.replace(/^\+?(63)?/, ''));
+        }
+      }
+    } else {
+      setPhone(val);
+    }
+  };
 
   // Map coordinate selection states
   const [mapClicked, setMapClicked] = useState(false);
@@ -108,9 +126,9 @@ export default function CreateProjectModal({ onClose, onCreate, isCompanyMode = 
               <label style={labelStyle}>Client Email</label>
               <input type="email" value={email} onChange={e => setEmail(e.target.value)} style={inputStyle} placeholder="client@company.com" required />
             </div>
-            <div>
+             <div>
               <label style={labelStyle}>Client Contact Number</label>
-              <input value={phone} onChange={e => setPhone(e.target.value)} style={inputStyle} placeholder="e.g. 0917 123 4567" required />
+              <input value={phone} onChange={e => handlePhoneChange(e.target.value)} style={inputStyle} placeholder="e.g. +63 917 123 4567" required />
             </div>
           </div>
 
