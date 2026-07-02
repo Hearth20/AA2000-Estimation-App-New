@@ -384,10 +384,6 @@ export default function App() {
             onDeleteProject={handleDeleteProject}
             onUpdateProject={handleUpdateProject}
           />
-<<<<<<< Updated upstream
-          <div className="fixed inset-0 z-50 overflow-y-auto" style={{ background: '#F8FAFC' }}>
-            <CreateSurveyForm onSave={handleSaveSurvey} onExit={handleExitCreateSurvey} initialCompanyName={prefilledCompanyName} />
-=======
           <div className="fixed inset-0 z-50 overflow-y-auto" style={{ background: '#F4F6FA' }}>
             <CreateSurveyForm
               onSave={handleSaveSurvey}
@@ -400,7 +396,6 @@ export default function App() {
               initialClientEmail={companyProject?.clientEmail}
               initialClientContactNumber={companyProject?.clientPhone}
             />
->>>>>>> Stashed changes
           </div>
         </div>
       </ErrorBoundary>
