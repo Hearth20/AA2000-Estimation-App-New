@@ -348,19 +348,19 @@ export default function Dashboard({
           />
         ) : (
           <>
-            {/* Page title row */}
-            <div className="px-8 pt-8 flex items-end justify-between">
-              <div>
-                <h1 className="text-2xl font-black tracking-tight text-[#0F172A] uppercase">
-                  {view === 'dashboard' ? 'Dashboard' : viewTitles[view] || 'Dashboard'}
-                </h1>
-                <p className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider mt-1">
-                  AA2000 SECURITY & TECHNOLOGY SOLUTIONS INC. • ESTIMATION PLATFORM
-                </p>
+            {/* Page title row — only for dashboard view */}
+            {view === 'dashboard' && (
+              <div className="px-8 pt-8 flex items-end justify-between">
+                <div>
+                  <h1 className="text-2xl font-black tracking-tight text-[#0F172A] uppercase">
+                    Dashboard
+                  </h1>
+                  <p className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider mt-1">
+                    AA2000 SECURITY & TECHNOLOGY SOLUTIONS INC. • ESTIMATION PLATFORM
+                  </p>
+                </div>
               </div>
-
-
-            </div>
+            )}
 
             {/* Stats Row — dashboard view only */}
             {view === 'dashboard' && (
@@ -536,18 +536,23 @@ export default function Dashboard({
 
             {/* Project Table */}
             {view !== 'dashboard' && view !== 'notifications' && (
-              <div className="px-8 pt-6">
+              <div className="px-8 pt-8">
               <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
 
                 {/* Controls row */}
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pb-5 border-b border-slate-100">
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-black text-slate-800 uppercase tracking-tight">
-                      {viewTitles[view] || 'Projects'}
-                    </span>
-                    <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
-                      {ordered.length}
-                    </span>
+                  <div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl font-black text-slate-800 uppercase tracking-tight">
+                        {viewTitles[view] || 'Projects'}
+                      </span>
+                      <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                        {ordered.length}
+                      </span>
+                    </div>
+                    <p className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider mt-1">
+                      AA2000 SECURITY & TECHNOLOGY SOLUTIONS INC. • ESTIMATION PLATFORM
+                    </p>
                   </div>
 
                   <div className="flex items-center gap-3 w-full sm:w-auto">
