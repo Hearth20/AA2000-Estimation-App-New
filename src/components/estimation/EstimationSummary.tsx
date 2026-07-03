@@ -171,11 +171,11 @@ function createManpower(): EstimationManpowerEntry {
 }
 
 function createConsumable(): EstimationConsumableEntry {
-  return { id: crypto.randomUUID(), name: '', brand: '', category: 'Hardware', quantity: 1, unit: 'pcs', unitPrice: 0, totalPrice: 0 };
+  return { id: crypto.randomUUID(), name: '', brand: '', category: 'Hardware', quantity: 1, unit: 'pcs', unitPrice: undefined as unknown as number, totalPrice: 0 };
 }
 
 function createFee(): EstimationAdditionalFeeEntry {
-  return { id: crypto.randomUUID(), type: 'Other', amount: 0, description: '' };
+  return { id: crypto.randomUUID(), type: 'Other', amount: undefined as unknown as number, description: '' };
 }
 
 const inputStyle: React.CSSProperties = {
@@ -400,7 +400,7 @@ export default function EstimationSummary({ project, user, onBack, onUpdateStatu
       }
       if (field === 'quantity' || field === 'unitPrice') {
         const qty = field === 'quantity' ? Number(value) : c.quantity;
-        const prc = field === 'unitPrice' ? Number(value) : c.unitPrice;
+        const prc = field === 'unitPrice' ? Number(value) : (c.unitPrice ?? 0);
         updated.totalPrice = qty * prc;
       }
       return updated;
@@ -1729,7 +1729,7 @@ export default function EstimationSummary({ project, user, onBack, onUpdateStatu
                     {showPrices && (
                       <>
                         <td className="py-2.5 pr-2">
-                          <input type="number" min={0} value={c.unitPrice || 0} onChange={e => updateConsumable(c.id, 'unitPrice', Number(e.target.value))}
+                          <input type="number" min={0} value={c.unitPrice ?? ''} onChange={e => updateConsumable(c.id, 'unitPrice', Number(e.target.value))}
                             style={{ ...inputStyle, width: '80px' }} />
                         </td>
                         <td className="py-2.5 pr-2">
@@ -1845,7 +1845,7 @@ export default function EstimationSummary({ project, user, onBack, onUpdateStatu
                     </td>
                     {showPrices && (
                       <td className="py-2.5 pr-2">
-                        <input type="number" min={0} value={f.amount || 0} onChange={e => updateFee(f.id, 'amount', Number(e.target.value))}
+                        <input type="number" min={0} value={f.amount ?? ''} onChange={e => updateFee(f.id, 'amount', Number(e.target.value))}
                           style={{ ...inputStyle, width: '120px' }} />
                       </td>
                     )}

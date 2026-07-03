@@ -325,7 +325,7 @@ export default function App() {
       latitude: data.latitude,
       longitude: data.longitude,
       buildingType: data.buildingType,
-      floors: data.floors,
+      floors: data.floors || undefined,
       systemTypes: data.systemTypes,
       surveyScope: data.surveyScope,
       status: 'Pending',

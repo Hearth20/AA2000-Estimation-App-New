@@ -287,7 +287,7 @@ export default function Dashboard({
 
         {/* Top Header Bar */}
         <div
-          className="px-8 h-16 flex items-center justify-between shrink-0 bg-gradient-to-r from-white to-blue-50 border-b border-slate-200 shadow-sm"
+          className="sticky top-0 z-30 px-8 h-16 flex items-center justify-between shrink-0 bg-gradient-to-r from-white to-blue-50 border-b border-slate-200 shadow-sm"
         >
           {/* App status */}
           <div className="flex items-center gap-2 bg-[#F8FAFC] border border-[#E5E7EB] rounded-full px-3 py-1.5">
@@ -857,7 +857,7 @@ function EditProjectModal({ project, onClose, onSave }: { project: Project; onCl
   const [location, setLocation] = useState(project.location);
   const [status, setStatus] = useState(project.status);
   const [buildingType, setBuildingType] = useState(project.buildingType || '');
-  const [floors, setFloors] = useState(project.floors || 1);
+  const [floors, setFloors] = useState<number | string>(project.floors ?? '');
 
   const inputStyle: React.CSSProperties = {
     width: '100%',
@@ -890,7 +890,7 @@ function EditProjectModal({ project, onClose, onSave }: { project: Project; onCl
           </button>
         </div>
         <form
-          onSubmit={e => { e.preventDefault(); onSave({ ...project, name, clientName, location, status, buildingType, floors }); onClose(); }}
+          onSubmit={e => { e.preventDefault(); onSave({ ...project, name, clientName, location, status, buildingType, floors: typeof floors === 'number' ? floors : undefined }); onClose(); }}
           className="p-5 space-y-4"
         >
           <div>

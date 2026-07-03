@@ -397,7 +397,7 @@ function EditCompanyModal({ project, onClose, onSave }: { project: Project; onCl
   const [location, setLocation] = useState(project.location);
   const [status, setStatus] = useState(project.status);
   const [buildingType, setBuildingType] = useState(project.buildingType || '');
-  const [floors, setFloors] = useState(project.floors || 1);
+  const [floors, setFloors] = useState<number | string>(project.floors ?? '');
 
   const inputStyle: React.CSSProperties = {
     width: '100%',
@@ -432,7 +432,7 @@ function EditCompanyModal({ project, onClose, onSave }: { project: Project; onCl
         <form
           onSubmit={e => {
             e.preventDefault();
-            onSave({ ...project, name, clientName, location, status, buildingType, floors });
+            onSave({ ...project, name, clientName, location, status, buildingType, floors: typeof floors === 'number' ? floors : undefined });
             onClose();
           }}
           className="p-5 space-y-4"

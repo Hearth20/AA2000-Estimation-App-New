@@ -12,7 +12,7 @@ export default function SurveySummary({ project, onBack, onViewEstimation }: Pro
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100">
-      <header className="bg-gradient-to-r from-white/80 to-blue-50/80 backdrop-blur-sm border-b border-slate-200 px-6 py-4 shadow-sm">
+      <header className="sticky top-0 z-10 bg-gradient-to-r from-white/80 to-blue-50/80 backdrop-blur-sm border-b border-slate-200 px-6 py-4 shadow-sm">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <button onClick={onBack} className="flex items-center gap-2 text-sm text-slate-500 hover:text-blue-600 font-medium transition">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

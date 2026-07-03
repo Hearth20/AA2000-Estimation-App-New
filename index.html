@@ -26,10 +26,20 @@
       ::-webkit-scrollbar-thumb:hover { background: #CBD5E1; }
       .no-scrollbar::-webkit-scrollbar { display: none; }
       .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      input[type="number"] { -moz-appearance: textfield; }
+      input[type="number"]::-webkit-outer-spin-button,
+      input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     </style>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      document.addEventListener('focus', function(e) {
+        if (e.target.tagName === 'INPUT' && e.target.type === 'number') {
+          e.target.select();
+        }
+      }, true);
+    </script>
   </body>
 </html>

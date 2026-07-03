@@ -16,7 +16,7 @@ export default function CreateProjectModal({ onClose, onCreate, isCompanyMode = 
   const [phone, setPhone] = useState('');
   const [location, setLocation] = useState('');
   const [buildingType, setBuildingType] = useState('Office');
-  const [floors, setFloors] = useState(1);
+  const [floors, setFloors] = useState<number | string>('');
 
   const handlePhoneChange = (val: string) => {
     const digitsOnly = val.replace(/\D/g, '');
@@ -40,7 +40,7 @@ export default function CreateProjectModal({ onClose, onCreate, isCompanyMode = 
       latitude: mapClicked ? latitude : undefined,
       longitude: mapClicked ? longitude : undefined,
       buildingType: isCompanyMode ? 'Other' : buildingType,
-      floors: isCompanyMode ? 1 : floors,
+      floors: isCompanyMode ? 1 : (typeof floors === 'number' ? floors : undefined),
       status: 'Pending',
       startDate: new Date().toISOString().split('T')[0],
       assignedTechnicians: DEFAULT_TECHNICIANS,

@@ -84,7 +84,7 @@ export default function SurveyWizard({ projectId, surveyType, onComplete, onBack
           const project = response.data;
           setFormData(prev => ({
             ...prev,
-            floors: project.floors || 1,
+            floors: project.floors ?? '',
             buildingType: project.buildingType || '',
           }));
         }
@@ -128,7 +128,7 @@ export default function SurveyWizard({ projectId, surveyType, onComplete, onBack
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 flex flex-col">
-      <header className="bg-gradient-to-r from-white/80 to-blue-50/80 backdrop-blur-sm border-b border-slate-200 px-6 py-4 shadow-sm">
+      <header className="sticky top-0 z-10 bg-gradient-to-r from-white/80 to-blue-50/80 backdrop-blur-sm border-b border-slate-200 px-6 py-4 shadow-sm">
         <div className="max-w-3xl mx-auto flex items-center justify-between">
           <button onClick={handlePrev} className="flex items-center gap-2 text-sm text-slate-500 hover:text-blue-600 font-medium transition">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -342,7 +342,7 @@ function BuildingForm({ data, onChange }: { data: any; onChange: any }) {
           <input
             type="number"
             min={1}
-            value={data.floors || 1}
+            value={data.floors ?? ''}
             onChange={e => handleDimensionChange('floors', Number(e.target.value))}
             className="w-full px-4 py-3 rounded-xl border border-slate-200/60 bg-white/50 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 focus:outline-none transition-all"
           />
@@ -370,7 +370,7 @@ function CameraForm({ data, onChange }: { data: any; onChange: any }) {
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="block text-xs font-bold text-slate-600 mb-1.5">Number of Cameras</label>
-          <input type="number" min={1} value={data.cameraCount || 1} onChange={e => onChange('cameraCount', Number(e.target.value))} className="w-full px-4 py-3 rounded-xl border border-slate-200/60 bg-white/50 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 focus:outline-none transition-all" />
+          <input type="number" min={1} value={data.cameraCount ?? ''} onChange={e => onChange('cameraCount', Number(e.target.value))} className="w-full px-4 py-3 rounded-xl border border-slate-200/60 bg-white/50 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 focus:outline-none transition-all" />
         </div>
         <div>
           <label className="block text-xs font-bold text-slate-600 mb-1.5">Resolution</label>
@@ -520,19 +520,19 @@ function DetectionForm({ data, onChange }: { data: any; onChange: any }) {
         </div>
         <div>
           <label className="block text-xs font-bold text-slate-600 mb-1.5">Smoke Detectors</label>
-          <input type="number" min={0} value={data.smokeDetectors || 0} onChange={e => onChange('smokeDetectors', Number(e.target.value))} className="w-full px-4 py-3 rounded-xl border border-slate-200/60 bg-white/50 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 focus:outline-none transition-all" />
+          <input type="number" min={0} value={data.smokeDetectors ?? ''} onChange={e => onChange('smokeDetectors', Number(e.target.value))} className="w-full px-4 py-3 rounded-xl border border-slate-200/60 bg-white/50 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 focus:outline-none transition-all" />
         </div>
         <div>
           <label className="block text-xs font-bold text-slate-600 mb-1.5">Heat Detectors</label>
-          <input type="number" min={0} value={data.heatDetectors || 0} onChange={e => onChange('heatDetectors', Number(e.target.value))} className="w-full px-4 py-3 rounded-xl border border-slate-200/60 bg-white/50 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 focus:outline-none transition-all" />
+          <input type="number" min={0} value={data.heatDetectors ?? ''} onChange={e => onChange('heatDetectors', Number(e.target.value))} className="w-full px-4 py-3 rounded-xl border border-slate-200/60 bg-white/50 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 focus:outline-none transition-all" />
         </div>
         <div>
           <label className="block text-xs font-bold text-slate-600 mb-1.5">Manual Call Points</label>
-          <input type="number" min={0} value={data.mcpCount || 0} onChange={e => onChange('mcpCount', Number(e.target.value))} className="w-full px-4 py-3 rounded-xl border border-slate-200/60 bg-white/50 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 focus:outline-none transition-all" />
+          <input type="number" min={0} value={data.mcpCount ?? ''} onChange={e => onChange('mcpCount', Number(e.target.value))} className="w-full px-4 py-3 rounded-xl border border-slate-200/60 bg-white/50 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 focus:outline-none transition-all" />
         </div>
         <div>
           <label className="block text-xs font-bold text-slate-600 mb-1.5">Sounders</label>
-          <input type="number" min={0} value={data.sounders || 0} onChange={e => onChange('sounders', Number(e.target.value))} className="w-full px-4 py-3 rounded-xl border border-slate-200/60 bg-white/50 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 focus:outline-none transition-all" />
+          <input type="number" min={0} value={data.sounders ?? ''} onChange={e => onChange('sounders', Number(e.target.value))} className="w-full px-4 py-3 rounded-xl border border-slate-200/60 bg-white/50 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 focus:outline-none transition-all" />
         </div>
       </div>
     </div>
@@ -546,7 +546,7 @@ function DoorForm({ data, onChange }: { data: any; onChange: any }) {
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="block text-xs font-bold text-slate-600 mb-1.5">Number of Doors</label>
-          <input type="number" min={1} value={data.doorCount || 1} onChange={e => onChange('doorCount', Number(e.target.value))} className="w-full px-4 py-3 rounded-xl border border-slate-200/60 bg-white/50 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 focus:outline-none transition-all" />
+          <input type="number" min={1} value={data.doorCount ?? ''} onChange={e => onChange('doorCount', Number(e.target.value))} className="w-full px-4 py-3 rounded-xl border border-slate-200/60 bg-white/50 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 focus:outline-none transition-all" />
         </div>
         <div>
           <label className="block text-xs font-bold text-slate-600 mb-1.5">Door Type</label>
@@ -627,19 +627,19 @@ function SensorForm({ data, onChange }: { data: any; onChange: any }) {
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="block text-xs font-bold text-slate-600 mb-1.5">PIR Sensors</label>
-          <input type="number" min={0} value={data.pirSensors || 0} onChange={e => onChange('pirSensors', Number(e.target.value))} className="w-full px-4 py-3 rounded-xl border border-slate-200/60 bg-white/50 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 focus:outline-none transition-all" />
+          <input type="number" min={0} value={data.pirSensors ?? ''} onChange={e => onChange('pirSensors', Number(e.target.value))} className="w-full px-4 py-3 rounded-xl border border-slate-200/60 bg-white/50 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 focus:outline-none transition-all" />
         </div>
         <div>
           <label className="block text-xs font-bold text-slate-600 mb-1.5">Door Contacts</label>
-          <input type="number" min={0} value={data.doorContacts || 0} onChange={e => onChange('doorContacts', Number(e.target.value))} className="w-full px-4 py-3 rounded-xl border border-slate-200/60 bg-white/50 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 focus:outline-none transition-all" />
+          <input type="number" min={0} value={data.doorContacts ?? ''} onChange={e => onChange('doorContacts', Number(e.target.value))} className="w-full px-4 py-3 rounded-xl border border-slate-200/60 bg-white/50 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 focus:outline-none transition-all" />
         </div>
         <div>
           <label className="block text-xs font-bold text-slate-600 mb-1.5">Glass Break Sensors</label>
-          <input type="number" min={0} value={data.glassBreak || 0} onChange={e => onChange('glassBreak', Number(e.target.value))} className="w-full px-4 py-3 rounded-xl border border-slate-200/60 bg-white/50 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 focus:outline-none transition-all" />
+          <input type="number" min={0} value={data.glassBreak ?? ''} onChange={e => onChange('glassBreak', Number(e.target.value))} className="w-full px-4 py-3 rounded-xl border border-slate-200/60 bg-white/50 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 focus:outline-none transition-all" />
         </div>
         <div>
           <label className="block text-xs font-bold text-slate-600 mb-1.5">Outdoor Sensors</label>
-          <input type="number" min={0} value={data.outdoorSensors || 0} onChange={e => onChange('outdoorSensors', Number(e.target.value))} className="w-full px-4 py-3 rounded-xl border border-slate-200/60 bg-white/50 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 focus:outline-none transition-all" />
+          <input type="number" min={0} value={data.outdoorSensors ?? ''} onChange={e => onChange('outdoorSensors', Number(e.target.value))} className="w-full px-4 py-3 rounded-xl border border-slate-200/60 bg-white/50 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 focus:outline-none transition-all" />
         </div>
       </div>
     </div>
@@ -702,11 +702,11 @@ function SuppressionForm({ data, onChange }: { data: any; onChange: any }) {
         </div>
         <div>
           <label className="block text-xs font-bold text-slate-600 mb-1.5">Number of Zones</label>
-          <input type="number" min={1} value={data.zones || 1} onChange={e => onChange('zones', Number(e.target.value))} className="w-full px-4 py-3 rounded-xl border border-slate-200/60 bg-white/50 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 focus:outline-none transition-all" />
+          <input type="number" min={1} value={data.zones ?? ''} onChange={e => onChange('zones', Number(e.target.value))} className="w-full px-4 py-3 rounded-xl border border-slate-200/60 bg-white/50 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 focus:outline-none transition-all" />
         </div>
         <div>
           <label className="block text-xs font-bold text-slate-600 mb-1.5">Cylinders/Units</label>
-          <input type="number" min={1} value={data.cylinders || 1} onChange={e => onChange('cylinders', Number(e.target.value))} className="w-full px-4 py-3 rounded-xl border border-slate-200/60 bg-white/50 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 focus:outline-none transition-all" />
+          <input type="number" min={1} value={data.cylinders ?? ''} onChange={e => onChange('cylinders', Number(e.target.value))} className="w-full px-4 py-3 rounded-xl border border-slate-200/60 bg-white/50 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 focus:outline-none transition-all" />
         </div>
       </div>
     </div>
@@ -735,7 +735,7 @@ function SpecsForm({ data, onChange }: { data: any; onChange: any }) {
         </div>
         <div>
           <label className="block text-xs font-bold text-slate-600 mb-1.5">Quantity</label>
-          <input type="number" min={1} value={data.quantity || 1} onChange={e => onChange('quantity', Number(e.target.value))} className="w-full px-4 py-3 rounded-xl border border-slate-200/60 bg-white/50 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 focus:outline-none transition-all" />
+          <input type="number" min={1} value={data.quantity ?? ''} onChange={e => onChange('quantity', Number(e.target.value))} className="w-full px-4 py-3 rounded-xl border border-slate-200/60 bg-white/50 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 focus:outline-none transition-all" />
         </div>
         <div>
           <label className="block text-xs font-bold text-slate-600 mb-1.5">Power Required?</label>
@@ -751,22 +751,153 @@ function SpecsForm({ data, onChange }: { data: any; onChange: any }) {
 }
 
 function ReviewForm({ data, surveyType }: { data: any; surveyType: string }) {
-  const fields = Object.entries(data).filter(([_, v]) => v !== '' && v !== 0 && v !== false && v !== null && v !== undefined);
-  return (
-    <div className="space-y-4">
-      <h3 className="font-bold text-lg">Review Survey Data</h3>
-      {fields.length === 0 ? (
-        <p className="text-slate-400 text-sm">No data entered yet. Fill in the previous steps.</p>
-      ) : (
-        <div className="grid grid-cols-2 gap-3">
-          {fields.map(([key, value]) => (
-            <div key={key} className="p-3 rounded-xl bg-slate-50/80 border border-slate-200/60 shadow-sm">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{key}</span>
-              <p className="text-sm font-semibold text-slate-800 mt-1">{String(value)}</p>
-            </div>
-          ))}
+  const LABELS: Record<string, string> = {
+    isNew: 'New Building', buildingType: 'Building Type', buildingLength: 'Building Length',
+    buildingWidth: 'Building Width', totalFloorArea: 'Total Floor Area', floorHeight: 'Floor Height',
+    floors: 'Number of Floors', roomsCount: 'Number of Rooms', cameraCount: 'Number of Cameras',
+    resolution: 'Resolution', cameraTypes: 'Camera Types', environment: 'Environment',
+    preferredBrand: 'Preferred Brand', cableType: 'Cable Type', preferredCableBrand: 'Cable Brand',
+    cablePath: 'Cable Path', wallType: 'Wall Type', coreDrilling: 'Core Drilling',
+    cableLength: 'Cable Length', systemType: 'Fire Alarm System', smokeDetectors: 'Smoke Detectors',
+    heatDetectors: 'Heat Detectors', mcpCount: 'Manual Call Points', sounders: 'Sounders',
+    doorCount: 'Number of Doors', doorType: 'Door Type', readerType: 'Reader Type',
+    lockType: 'Lock Type', controllerLocation: 'Controller Location', poeAvailable: 'PoE Available',
+    upsRequired: 'UPS Required', networkRequired: 'Network Required', pirSensors: 'PIR Sensors',
+    doorContacts: 'Door Contacts', glassBreak: 'Glass Break Sensors', outdoorSensors: 'Outdoor Sensors',
+    panelLocation: 'Panel Location', rackAvailable: 'Rack Available', powerAvailable: 'Power Available',
+    suppressionType: 'Suppression System', zones: 'Number of Zones', cylinders: 'Cylinders / Units',
+    otherSystemType: 'System Type', description: 'Description', quantity: 'Quantity',
+    powerRequired: 'Power Required',
+  };
+
+  const BOOLS: Record<string, [string, string]> = {
+    isNew: ['Yes', 'No'], coreDrilling: ['Required', 'Not Required'],
+    poeAvailable: ['Available', 'Not Available'], upsRequired: ['Required', 'Not Required'],
+    networkRequired: ['Required', 'Not Required'], rackAvailable: ['Available', 'Not Available'],
+    powerAvailable: ['Available', 'Not Available'], powerRequired: ['Required', 'Not Required'],
+  };
+
+  const UNITS: Record<string, string> = {
+    buildingLength: 'm', buildingWidth: 'm', floorHeight: 'm', totalFloorArea: 'm²', cableLength: 'm',
+  };
+
+  const has = (k: string) => data[k] !== undefined && data[k] !== null && data[k] !== '';
+
+  const renderVal = (key: string) => {
+    const v = data[key];
+    if (v === undefined || v === null || v === '') return null;
+    if (key in BOOLS) {
+      const [t, f] = BOOLS[key];
+      const val = v === true || v === 'true';
+      return (
+        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border ${val ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-500 border-slate-200'}`}>
+          <span className={`w-1.5 h-1.5 rounded-full ${val ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+          {val ? t : f}
+        </span>
+      );
+    }
+    if (key === 'cameraTypes' && Array.isArray(v)) {
+      return v.length ? v.join(', ') : null;
+    }
+    let display = String(v);
+    if (key in UNITS) {
+      const n = Number(v);
+      display = isNaN(n) ? `${v} ${UNITS[key]}` : `${n.toLocaleString()} ${UNITS[key]}`;
+    } else if (typeof v === 'number') {
+      display = v.toLocaleString();
+    } else if (key === 'totalFloorArea' && !isNaN(Number(v))) {
+      display = `${Number(v).toLocaleString()} m²`;
+    }
+    return <span className="text-sm font-semibold text-slate-800">{display}</span>;
+  };
+
+  const renderField = (key: string) => {
+    const val = renderVal(key);
+    if (!val) return null;
+    return (
+      <div key={key}>
+        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">{LABELS[key] || key}</p>
+        <div>{val}</div>
+      </div>
+    );
+  };
+
+  const Section = ({ icon, title, fields, fullWidth }: { icon: string; title: string; fields: string[]; fullWidth?: boolean }) => {
+    const visible = fields.filter(f => has(f));
+    if (!visible.length) return null;
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center gap-2 pb-1 border-b border-slate-200/80">
+          <span className="text-base">{icon}</span>
+          <h4 className="text-sm font-black text-slate-700 uppercase tracking-wide">{title}</h4>
         </div>
-      )}
+        {fullWidth ? (
+          <div className="space-y-3">
+            {visible.map(f => (
+              <div key={f}>
+                {renderField(f)}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+            {visible.map(f => renderField(f))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const buildingFields = ['isNew', 'buildingType', 'buildingLength', 'buildingWidth', 'totalFloorArea', 'floorHeight', 'floors', 'roomsCount'];
+  const hasBuilding = buildingFields.some(f => has(f));
+  if (!hasBuilding) {
+    return (
+      <div className="text-center py-12">
+        <span className="text-3xl block mb-3">📋</span>
+        <p className="text-slate-400 text-sm font-semibold">No survey data entered yet. Fill in the previous steps.</p>
+      </div>
+    );
+  }
+
+  const sections: { icon: string; title: string; fields: string[]; fullWidth?: boolean }[] = [
+    { icon: '🏢', title: 'Building Information', fields: buildingFields },
+  ];
+
+  if (surveyType === 'CCTV') {
+    sections.push(
+      { icon: '📷', title: 'Camera Configuration', fields: ['cameraCount', 'resolution', 'cameraTypes', 'environment', 'preferredBrand'] },
+      { icon: '🔌', title: 'Infrastructure & Cabling', fields: ['cableType', 'preferredCableBrand', 'cablePath', 'wallType', 'coreDrilling', 'cableLength'] },
+    );
+  } else if (surveyType === 'FIRE_ALARM') {
+    sections.push(
+      { icon: '🔔', title: 'Detection System', fields: ['systemType', 'preferredBrand', 'smokeDetectors', 'heatDetectors', 'mcpCount', 'sounders'] },
+      { icon: '🎛️', title: 'Control Panel', fields: ['panelLocation', 'rackAvailable', 'powerAvailable', 'networkRequired'] },
+    );
+  } else if (surveyType === 'ACCESS_CONTROL') {
+    sections.push(
+      { icon: '🚪', title: 'Doors & Readers', fields: ['doorCount', 'doorType', 'readerType', 'lockType'] },
+      { icon: '🖥️', title: 'Controller Configuration', fields: ['controllerLocation', 'poeAvailable', 'upsRequired', 'networkRequired'] },
+    );
+  } else if (surveyType === 'BURGLAR_ALARM') {
+    sections.push(
+      { icon: '📡', title: 'Sensors', fields: ['pirSensors', 'doorContacts', 'glassBreak', 'outdoorSensors'] },
+      { icon: '🎛️', title: 'Control Panel', fields: ['panelLocation', 'rackAvailable', 'powerAvailable', 'networkRequired'] },
+    );
+  } else if (surveyType === 'FIRE_PROTECTION') {
+    sections.push(
+      { icon: '🧯', title: 'Suppression System', fields: ['suppressionType', 'zones', 'cylinders'] },
+    );
+  } else if (surveyType === 'OTHER') {
+    sections.push(
+      { icon: '⚙️', title: 'System Specifications', fields: ['otherSystemType', 'description', 'quantity', 'powerRequired'], fullWidth: true },
+    );
+  }
+
+  return (
+    <div className="space-y-7">
+      {sections.map((s, i) => (
+        <Section key={i} {...s} />
+      ))}
     </div>
   );
 }

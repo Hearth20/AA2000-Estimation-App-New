@@ -40,7 +40,7 @@ export interface SurveyFormData {
   surveyScope: string;
   systemTypes: SystemType[];
   buildingType: string;
-  floors: number;
+  floors: number | '';
   startDate: string;
 }
 
@@ -95,7 +95,7 @@ export default function CreateSurveyForm({
     surveyScope: '',
     systemTypes: [],
     buildingType: '',
-    floors: 1,
+    floors: '',
     startDate: new Date().toISOString().split('T')[0],
   });
 
@@ -153,18 +153,17 @@ export default function CreateSurveyForm({
     background: '#FFFFFF',
     border: '1px solid #E2E8F0',
     borderRadius: '24px',
-    padding: '24px',
-    marginBottom: '16px',
+    padding: '20px',
+    marginBottom: '24px',
     boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
   };
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#F8FAFC' }}>
       {/* Header */}
-      <header className="px-6 py-4 bg-gradient-to-r from-white to-blue-50 border-b border-slate-200 shadow-sm">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
+      <header className="sticky top-0 z-10 px-6 py-3 bg-gradient-to-r from-white to-blue-50 border-b border-slate-200 shadow-sm">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center gap-3 mb-4">
               <div
                 className="w-9 h-9 rounded-xl flex items-center justify-center text-white"
                 style={{ background: '#1E3A8A' }}
@@ -176,14 +175,6 @@ export default function CreateSurveyForm({
                 <p className="text-[10px] font-bold text-slate-400">Initialize a new client survey site mapping</p>
               </div>
             </div>
-            <button
-              type="button"
-              onClick={onExit}
-              className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-50 text-slate-500 border border-slate-200 hover:text-slate-800 transition-colors"
-            >
-              Exit
-            </button>
-          </div>
 
           {/* Step indicators */}
           <div className="flex items-center gap-2 overflow-x-auto pb-1">
@@ -214,8 +205,8 @@ export default function CreateSurveyForm({
       </header>
 
       {/* Form Content */}
-      <div className="flex-1 overflow-y-auto py-8">
-        <form onSubmit={handleSubmit} className="max-w-7xl mx-auto px-6">
+      <div className="flex-1 overflow-y-auto py-6">
+        <form onSubmit={handleSubmit} className="max-w-4xl mx-auto px-6">
 
           {/* Step 0: Company & Project */}
           {step === 0 && (
@@ -223,8 +214,8 @@ export default function CreateSurveyForm({
               <p className="text-[10px] font-bold uppercase tracking-wider mb-4 text-[#1D4ED8]">
                 🏢 COMPANY & PROJECT DETAILS
               </p>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-6">
+                <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label style={labelStyle}>Company Name</label>
                     <input
@@ -248,7 +239,7 @@ export default function CreateSurveyForm({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label style={labelStyle}>Client Contact Name</label>
                     <input
@@ -269,7 +260,7 @@ export default function CreateSurveyForm({
                       required
                     />
                   </div>
-                  <div>
+                  <div className="col-span-2">
                     <label style={labelStyle}>Client Email Address</label>
                     <input
                       value={form.clientEmail}
@@ -281,7 +272,7 @@ export default function CreateSurveyForm({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label style={labelStyle}>Location Name / Area</label>
                     <input value={form.locationName} onChange={e => update('locationName', e.target.value)} style={inputStyle} placeholder="e.g. Makati City, Manila" required />
@@ -298,7 +289,7 @@ export default function CreateSurveyForm({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label style={labelStyle}>Building Type</label>
                     <select value={form.buildingType} onChange={e => update('buildingType', e.target.value)} style={{ ...inputStyle, cursor: 'pointer' }}>
@@ -337,7 +328,7 @@ export default function CreateSurveyForm({
                       key={opt.type}
                       type="button"
                       onClick={() => toggleSystemType(opt.type)}
-                      className="flex items-center gap-3 p-4 rounded-2xl border-2 text-left transition-all"
+                      className="flex items-center gap-3 p-3 rounded-2xl border-2 text-left transition-all"
                       style={{
                         borderColor: selected ? opt.color : '#E2E8F0',
                         background: selected ? opt.bg : '#FAFAFA',
@@ -379,13 +370,23 @@ export default function CreateSurveyForm({
 
           {/* Navigation Buttons */}
           <div className="flex items-center justify-between gap-3 pb-8">
-            <button
-              type="button"
-              onClick={() => step > 0 ? setStep(step - 1) : onExit()}
-              className="px-6 py-3 rounded-xl text-xs font-bold bg-white text-slate-500 border border-slate-200 hover:text-slate-800 transition-colors"
-            >
-              {step > 0 ? '← Back' : 'Exit'}
-            </button>
+            {step > 0 ? (
+              <button
+                type="button"
+                onClick={() => setStep(step - 1)}
+                className="px-6 py-3 rounded-xl text-xs font-bold bg-white text-slate-500 border border-slate-200 hover:text-slate-800 transition-colors"
+              >
+                ← Back
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={onExit}
+                className="px-6 py-3 rounded-xl text-xs font-bold bg-white text-slate-500 border border-slate-200 hover:text-slate-800 transition-colors"
+              >
+                Exit
+              </button>
+            )}
 
             {step < STEPS.length - 1 ? (
               <button
