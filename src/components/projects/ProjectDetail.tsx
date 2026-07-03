@@ -361,6 +361,75 @@ export default function ProjectDetail({ user, project, onBack, onStartSurvey, on
           </div>
         </div>
 
+        {/* Progress Stepper */}
+        <div className="bg-white rounded-3xl p-6 mb-8 border border-slate-100 shadow-sm animate-fade-in-up">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-xs font-black tracking-wider text-slate-800 uppercase">Project Survey Workflow</h2>
+              <p className="text-[10px] font-bold text-slate-400 uppercase mt-0.5">Current Phase Progress</p>
+            </div>
+            <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-100 rounded-full px-3 py-1">
+              <span className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wide">
+                Current status: {project.status || 'Pending'}
+              </span>
+            </div>
+          </div>
+
+          <div className="relative mt-8 mb-4 px-4">
+            {/* Connecting lines */}
+            <div className="absolute top-[20px] left-8 right-8 h-1 bg-slate-100 z-0 rounded-full" />
+            <div 
+              className="absolute top-[20px] left-8 h-1 bg-blue-600 z-0 transition-all duration-700 rounded-full" 
+              style={{ 
+                width: `${
+                  (project.status === 'Pending' ? 0 :
+                   project.status === 'In Progress' || project.status === 'Finalized - Rejected' ? 33 :
+                   project.status === 'Finalized' ? 66 : 100)
+                }%` 
+              }}
+            />
+
+            <div className="relative z-10 flex justify-between">
+              {[
+                { label: 'Scheduled', desc: 'Awaiting survey start', icon: '📅', stage: 'Pending' },
+                { label: 'Surveying', desc: 'Category specifications', icon: '⚡', stage: 'In Progress' },
+                { label: 'Under Review', desc: 'Finalized, awaiting approval', icon: '📋', stage: 'Finalized' },
+                { label: 'Approved', desc: 'Survey finalized', icon: '✓', stage: 'Completed' },
+              ].map((step, idx) => {
+                const currentStageIndex = 
+                  project.status === 'Pending' ? 0 :
+                  project.status === 'In Progress' || project.status === 'Finalized - Rejected' ? 1 :
+                  project.status === 'Finalized' ? 2 : 3;
+
+                const isCompleted = idx < currentStageIndex;
+                const isActive = idx === currentStageIndex;
+                
+                return (
+                  <div key={step.label} className="flex flex-col items-center text-center flex-1">
+                    <div 
+                      className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-black transition-all duration-500 border-2 ${
+                        isCompleted ? 'bg-emerald-500 border-emerald-500 text-white shadow-md' :
+                        isActive ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-100 scale-110' :
+                        'bg-white border-slate-200 text-slate-400'
+                      }`}
+                    >
+                      {isCompleted ? '✓' : step.icon}
+                    </div>
+                    <p className={`text-[11px] font-black mt-3 transition-colors duration-300 uppercase tracking-tight ${
+                      isCompleted ? 'text-emerald-600' : isActive ? 'text-blue-600' : 'text-slate-500'
+                    }`}>
+                      {step.label}
+                    </p>
+                    <p className="text-[9px] font-bold text-slate-400 mt-1 max-w-[120px] leading-tight">
+                      {step.desc}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
         {/* Survey Types Select - Only visible to Technicians */}
         {user.role === 'TECHNICIAN' && (
           <section className="mb-8">

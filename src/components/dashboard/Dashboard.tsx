@@ -9,6 +9,7 @@ import Home from './Home';
 import CompanyDetail from '../projects/CompanyDetail';
 import AccountDropdown from './AccountDropdown';
 import { getRoleTheme } from '../../utils/RoleTheme';
+import CalendarView from './CalendarView';
 
 interface Props {
   user: User;
@@ -388,6 +389,12 @@ export default function Dashboard({
               onNewCompanyClick={() => { setIsCompanyMode(true); setShowCreate(true); }}
               onDeleteProject={handleDelete}
               onUpdateProject={handleSaveEdit}
+            />
+          ) : view === 'calendar' ? (
+            <CalendarView
+              projects={projectList}
+              onSelectProject={onSelectProject}
+              userRole={user.role || 'TECHNICIAN'}
             />
           ) : (
             <div className="pb-10">

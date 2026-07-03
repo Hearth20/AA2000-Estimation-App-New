@@ -8,7 +8,7 @@ type View =
   | 'todo' | 'assignment' | 'missing' | 'done' | 'history'
   | 'approval' | 'finalize'
   | 'ongoing' | 'upcoming' | 'missing-notif' | 'approval-notif' | 'finalize-notif'
-  | 'notifications';
+  | 'notifications' | 'calendar';
 
 interface Props {
   user: User;
@@ -98,6 +98,11 @@ const navIcons: Record<string, React.ReactNode> = {
       <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
     </svg>
   ),
+  calendar: (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+    </svg>
+  ),
 };
 
 export default function Sidebar({ user, currentView, onNavigate, notifications }: Props) {
@@ -165,6 +170,7 @@ export default function Sidebar({ user, currentView, onNavigate, notifications }
       items: [
         { view: 'home', label: 'Home' },
         { view: 'dashboard', label: 'Dashboard' },
+        { view: 'calendar', label: 'Survey Calendar' },
         { view: 'workspace', label: 'Workspace' },
         { view: 'assignment', label: 'All Projects', accent: theme.primary },
         { view: 'missing', label: 'Missing Specs', accent: '#F59E0B' },
@@ -277,7 +283,7 @@ export default function Sidebar({ user, currentView, onNavigate, notifications }
                 className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white ring-2 ring-offset-1"
                 style={{
                   background: theme.buttonGradient,
-                  ringColor: `${theme.primary}40`,
+                  boxShadow: `0 0 0 2px ${theme.primary}40`,
                 }}
               >
                 {initials}

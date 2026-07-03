@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import type { User, Project } from '../../App';
 import { getRoleTheme } from '../../utils/RoleTheme';
 
@@ -79,6 +79,8 @@ function StatPill({
     </div>
   );
 }
+
+
 
 export default function Home({
   user,
@@ -310,6 +312,8 @@ export default function Home({
           </div>
         </div>
       </div>
+
+
 
       {/* ══════════════════════════════════════════
           COMPANY LIST CARD
