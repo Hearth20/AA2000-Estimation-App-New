@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { User } from '../../App';
 import type { Notification } from '../notifications/NotificationBell';
+import { getRoleTheme } from '../../utils/RoleTheme';
 
 type View =
   | 'home' | 'dashboard' | 'workspace' | 'create-survey'
@@ -101,6 +102,8 @@ const navIcons: Record<string, React.ReactNode> = {
 
 export default function Sidebar({ user, currentView, onNavigate, notifications }: Props) {
   const isAdmin = user.role === 'ADMIN';
+  const theme = getRoleTheme(user.role);
+  const [collapsed, setCollapsed] = useState(false);
 
   const getUnreadCount = (viewName: View) => {
     if (!notifications) return 0;
@@ -137,25 +140,20 @@ export default function Sidebar({ user, currentView, onNavigate, notifications }
   };
 
   const isNotificationView = [
-    'notifications',
-    'ongoing',
-    'upcoming',
-    'missing-notif',
-    'approval-notif',
-    'finalize-notif'
+    'notifications', 'ongoing', 'upcoming', 'missing-notif', 'approval-notif', 'finalize-notif'
   ].includes(currentView);
 
   const navGroups: { label: string; items: { label: string; view: View; accent?: string }[] }[] = isNotificationView ? [
     {
       label: 'NOTIFICATION',
       items: [
-        { view: 'notifications', label: 'All Notification', accent: '#1E3A8A' },
+        { view: 'notifications', label: 'All Notifications', accent: theme.primary },
         { view: 'ongoing', label: 'Ongoing Surveys', accent: '#2563EB' },
         { view: 'upcoming', label: 'Upcoming Surveys', accent: '#10B981' },
         { view: 'missing-notif', label: 'Missing Alerts', accent: '#F59E0B' },
         ...((isAdmin || user.role === 'TECHNICIAN' || user.role === 'SALES')
           ? [
-              { view: 'approval-notif' as View, label: 'Approval Alerts', accent: '#4F46E5' },
+              { view: 'approval-notif' as View, label: 'Approval Alerts', accent: '#8B5CF6' },
               { view: 'finalize-notif' as View, label: 'Finalize Alerts', accent: '#10B981' },
             ]
           : []),
@@ -168,7 +166,7 @@ export default function Sidebar({ user, currentView, onNavigate, notifications }
         { view: 'home', label: 'Home' },
         { view: 'dashboard', label: 'Dashboard' },
         { view: 'workspace', label: 'Workspace' },
-        { view: 'assignment', label: 'All Projects', accent: '#2563EB' },
+        { view: 'assignment', label: 'All Projects', accent: theme.primary },
         { view: 'missing', label: 'Missing Specs', accent: '#F59E0B' },
       ],
     },
@@ -177,7 +175,7 @@ export default function Sidebar({ user, currentView, onNavigate, notifications }
       items: [
         ...((isAdmin || user.role === 'TECHNICIAN' || user.role === 'SALES')
           ? [
-              { view: 'approval' as View, label: 'Approval Pipeline', accent: '#4F46E5' },
+              { view: 'approval' as View, label: 'Approval Pipeline', accent: '#8B5CF6' },
               { view: 'finalize' as View, label: 'Finalize Review', accent: '#10B981' },
             ]
           : [{ view: 'done' as View, label: 'Completed Surveys', accent: '#10B981' }]),
@@ -186,144 +184,215 @@ export default function Sidebar({ user, currentView, onNavigate, notifications }
     },
   ];
 
+  const initials = (user.fullName || user.email || 'Admin User')
+    .split(' ')
+    .map(n => n[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
 
-  const initials = (user.fullName || user.email || 'Admin User').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+  const totalUnread = notifications ? notifications.filter(n => !n.read).length : 0;
 
   return (
     <aside
-      className="w-60 flex flex-col h-full shrink-0 overflow-hidden"
-      style={{ background: '#EEF2FF', borderRight: '1px solid #E5E7EB' }}
+      className="flex flex-col h-full shrink-0 overflow-hidden transition-all duration-300"
+      style={{
+        width: collapsed ? 64 : 240,
+        background: theme.sidebarBg,
+        borderRight: `1px solid ${theme.sidebarBorder}`,
+      }}
     >
-      {/* Brand Logo or Back button - depending on mode */}
-      <div className="px-5 h-16 flex items-center" style={{ borderBottom: '1px solid #E5E7EB' }}>
+      {/* ── Brand Logo / Back + Collapse toggle ── */}
+      <div
+        className="px-3 h-16 flex items-center justify-between shrink-0"
+        style={{ borderBottom: `1px solid ${theme.sidebarBorder}` }}
+      >
         {isNotificationView ? (
           <button
             onClick={() => onNavigate('home')}
-            className="w-full h-full flex items-center gap-2.5 text-[#64748B] hover:text-[#1E3A8A] transition-colors font-bold text-xs"
+            className="flex items-center gap-2 font-bold text-xs transition-colors"
+            style={{ color: '#64748B' }}
+            onMouseEnter={e => (e.currentTarget.style.color = theme.primary)}
+            onMouseLeave={e => (e.currentTarget.style.color = '#64748B')}
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
-            Back to Dashboard
+            {!collapsed && <span>Back to Dashboard</span>}
           </button>
         ) : (
           <div
-            className="w-full h-full flex items-center gap-2.5 cursor-pointer hover:opacity-85 transition-opacity"
+            className="flex items-center gap-2.5 cursor-pointer hover:opacity-85 transition-opacity min-w-0"
             onClick={() => onNavigate('home')}
           >
             <div
-              className="w-9 h-9 rounded-lg flex items-center justify-center text-white font-black text-sm shrink-0"
-              style={{ background: '#1E3A8A' }}
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-black text-sm shrink-0 transition-transform hover:scale-105"
+              style={{ background: theme.heroGradient }}
             >
               A
             </div>
-            <div>
-              <span className="text-sm font-black tracking-tight" style={{ color: '#1E3A8A' }}>AA2000</span>
-              <p className="text-[9px] font-bold tracking-widest text-[#94A3B8]" style={{ marginTop: '-2px' }}>CONNECT</p>
-            </div>
+            {!collapsed && (
+              <div className="min-w-0">
+                <span className="text-sm font-black tracking-tight block" style={{ color: theme.primaryDark }}>
+                  AA2000
+                </span>
+                <p className="text-[9px] font-bold tracking-widest text-[#94A3B8]" style={{ marginTop: '-2px' }}>
+                  CONNECT
+                </p>
+              </div>
+            )}
           </div>
         )}
+
+        {/* Collapse toggle */}
+        <button
+          onClick={() => setCollapsed(c => !c)}
+          className="p-1 rounded-md transition-colors shrink-0 ml-auto"
+          style={{ color: '#94A3B8' }}
+          onMouseEnter={e => ((e.currentTarget as HTMLElement).style.color = theme.primary)}
+          onMouseLeave={e => ((e.currentTarget as HTMLElement).style.color = '#94A3B8')}
+          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        >
+          {collapsed ? (
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          ) : (
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+          )}
+        </button>
       </div>
 
-      {/* User profile */}
-      <div className="px-4 py-4" style={{ borderBottom: '1px solid #E5E7EB' }}>
-        <div className="flex items-center gap-2.5">
-          <div className="relative shrink-0">
-            <div
-              className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
-              style={{ background: '#1E3A8A', color: '#fff' }}
-            >
-              {initials}
+      {/* ── User Profile Card ── */}
+      {!isNotificationView && (
+        <div
+          className="px-3 py-3 shrink-0"
+          style={{ borderBottom: `1px solid ${theme.sidebarBorder}` }}
+        >
+          <div className={`flex items-center gap-2.5 ${collapsed ? 'justify-center' : ''}`}>
+            <div className="relative shrink-0">
+              <div
+                className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white ring-2 ring-offset-1"
+                style={{
+                  background: theme.buttonGradient,
+                  ringColor: `${theme.primary}40`,
+                }}
+              >
+                {initials}
+              </div>
+              {/* Online indicator */}
+              <div
+                className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-white"
+                style={{ background: '#22C55E' }}
+              />
             </div>
-            <div
-              className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2"
-              style={{ background: '#10B981', borderColor: '#FFFFFF' }}
-            />
-          </div>
-          <div className="min-w-0">
-            <p className="text-xs font-bold truncate" style={{ color: '#1E293B' }}>{user.fullName || user.email}</p>
-            <p className="text-[10px]" style={{ color: '#64748B' }}>
-              {user.role === 'ADMIN' ? 'Administrator' : user.role === 'SALES' ? 'Sales Representative' : 'Technician'}
-            </p>
+            {!collapsed && (
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-bold truncate text-[#1E293B]">
+                  {user.fullName || user.email}
+                </p>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span
+                    className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+                    style={{ background: theme.primaryAlpha12, color: theme.primary }}
+                  >
+                    {user.role === 'ADMIN' ? 'Admin' : user.role === 'SALES' ? 'Sales' : 'Tech'}
+                  </span>
+                  {totalUnread > 0 && (
+                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-red-50 text-red-500">
+                      {totalUnread} new
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
-      </div>
+      )}
 
-      {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-6">
+      {/* ── Navigation ── */}
+      <nav className="flex-1 overflow-y-auto no-scrollbar px-2 py-3 space-y-5">
         {navGroups.map(group => (
           <div key={group.label}>
-            <p
-              className="px-2.5 mb-2 text-[9px] font-bold uppercase tracking-widest text-[#94A3B8]"
-            >
-              {group.label}
-            </p>
+            {!collapsed && (
+              <p
+                className="px-2.5 mb-1.5 text-[9px] font-bold uppercase tracking-widest"
+                style={{ color: '#94A3B8' }}
+              >
+                {group.label}
+              </p>
+            )}
             <div className="space-y-0.5">
               {group.items.map(item => {
                 const active = currentView === item.view;
+                const isNotifItem = [
+                  'notifications', 'ongoing', 'upcoming', 'missing-notif', 'approval-notif', 'finalize-notif'
+                ].includes(item.view);
+
+                const count = isNotifItem ? getNotificationCount(item.view) : getUnreadCount(item.view);
+                const accentColor = item.accent || theme.primary;
+
                 return (
                   <button
                     key={item.view}
                     onClick={() => onNavigate(item.view)}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-semibold transition-all duration-150 text-left relative"
+                    title={collapsed ? item.label : undefined}
+                    className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[12.5px] font-semibold transition-all duration-150 text-left relative group ${
+                      collapsed ? 'justify-center' : ''
+                    }`}
                     style={
                       active
                         ? {
-                            background: 'rgba(30,58,138,0.06)',
-                            color: '#1E3A8A',
-                            border: '1px solid rgba(30,58,138,0.1)',
+                            background: `${theme.primary}12`,
+                            color: theme.primary,
+                            borderLeft: collapsed ? undefined : `2.5px solid ${theme.primary}`,
+                            paddingLeft: collapsed ? undefined : '8px',
                           }
                         : {
                             color: '#64748B',
-                            border: '1px solid transparent',
+                            borderLeft: collapsed ? undefined : '2.5px solid transparent',
                           }
                     }
                     onMouseEnter={e => {
                       if (!active) {
-                        (e.currentTarget as HTMLElement).style.background = '#F8FAFC';
+                        (e.currentTarget as HTMLElement).style.background = `${theme.primary}08`;
                         (e.currentTarget as HTMLElement).style.color = '#1E293B';
+                        (e.currentTarget as HTMLElement).style.transform = 'translateX(2px)';
                       }
                     }}
                     onMouseLeave={e => {
                       if (!active) {
                         (e.currentTarget as HTMLElement).style.background = 'transparent';
                         (e.currentTarget as HTMLElement).style.color = '#64748B';
+                        (e.currentTarget as HTMLElement).style.transform = 'translateX(0)';
                       }
                     }}
                   >
                     <span
-                      className="shrink-0"
-                      style={{ color: active ? '#1E3A8A' : '#94A3B8' }}
+                      className="shrink-0 transition-colors"
+                      style={{ color: active ? theme.primary : '#94A3B8' }}
                     >
                       {navIcons[item.view]}
                     </span>
-                    {item.label}
-                    {(() => {
-                       const isNotifItem = [
-                         'notifications',
-                         'ongoing',
-                         'upcoming',
-                         'missing-notif',
-                         'approval-notif',
-                         'finalize-notif'
-                       ].includes(item.view);
 
-                       const count = isNotifItem ? getNotificationCount(item.view) : getUnreadCount(item.view);
-                       if (isNotifItem || count > 0) {
-                         return (
-                           <span
-                             className="ml-auto px-2 py-0.5 rounded-full text-[9px] font-black tracking-wider transition-all duration-200"
-                             style={{
-                               background: item.accent ? `${item.accent}15` : 'rgba(30,58,138,0.08)',
-                               color: item.accent || '#1E3A8A',
-                             }}
-                           >
-                             {count}
-                           </span>
-                         );
-                       }
-                       return null;
-                     })()}
+                    {!collapsed && (
+                      <>
+                        <span className="flex-1 truncate">{item.label}</span>
+                        {(isNotifItem || count > 0) && (
+                          <span
+                            className="ml-auto shrink-0 min-w-[18px] px-1.5 py-0.5 rounded-full text-[9px] font-black text-center"
+                            style={{
+                              background: `${accentColor}15`,
+                              color: accentColor,
+                            }}
+                          >
+                            {count}
+                          </span>
+                        )}
+                      </>
+                    )}
                   </button>
                 );
               })}
@@ -332,7 +401,22 @@ export default function Sidebar({ user, currentView, onNavigate, notifications }
         ))}
       </nav>
 
-
+      {/* ── Bottom: System status ── */}
+      {!collapsed && (
+        <div
+          className="px-4 py-3 shrink-0"
+          style={{ borderTop: `1px solid ${theme.sidebarBorder}` }}
+        >
+          <div className="flex items-center gap-2">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
+            </span>
+            <span className="text-[9px] font-bold text-emerald-700 tracking-wider">SYSTEM ONLINE</span>
+          </div>
+          <p className="text-[9px] text-slate-400 mt-1 font-medium">v5.0 · AA2000 Connect</p>
+        </div>
+      )}
     </aside>
   );
 }
