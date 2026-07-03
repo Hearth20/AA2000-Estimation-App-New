@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import type { User } from '../../App';
 import type { Notification } from '../notifications/NotificationBell';
 import { getRoleTheme } from '../../utils/RoleTheme';
+import logo from '../../images/logo.png';
 
 type View =
   | 'home' | 'dashboard' | 'workspace' | 'create-survey'
@@ -231,19 +232,18 @@ export default function Sidebar({ user, currentView, onNavigate, notifications }
             className="flex items-center gap-2.5 cursor-pointer hover:opacity-85 transition-opacity min-w-0"
             onClick={() => onNavigate('home')}
           >
-            <div
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-black text-sm shrink-0 transition-transform hover:scale-105"
-              style={{ background: theme.heroGradient }}
-            >
-              A
-            </div>
+            <img
+              src={logo}
+              alt="AA2000 Logo"
+              className="w-8 h-8 rounded-lg shrink-0 transition-transform hover:scale-105 object-contain"
+            />
             {!collapsed && (
-              <div className="min-w-0">
+              <div className="min-w-0 overflow-hidden">
                 <span className="text-sm font-black tracking-tight block" style={{ color: theme.primaryDark }}>
                   AA2000
                 </span>
-                <p className="text-[9px] font-bold tracking-widest text-[#94A3B8]" style={{ marginTop: '-2px' }}>
-                  CONNECT
+                <p className="text-[8px] font-medium leading-tight text-[#94A3B8]" style={{ marginTop: '0px' }}>
+                  Security and Technology Solutions Inc.
                 </p>
               </div>
             )}
