@@ -51,6 +51,7 @@ const STORAGE_KEYS = {
   projects: 'aa2000_projects',
   notifications: 'aa2000_notifications',
   user: 'aa2000_user',
+  theme: 'aa2000_theme',
 };
 
 // Migrate / clear stale data from older app versions to prevent white screen crashes
@@ -208,6 +209,30 @@ export default function App() {
       return newNotifs;
     });
   }, [projects]);
+
+  const [darkMode, setDarkMode] = useState(() => {
+    try { return localStorage.getItem(STORAGE_KEYS.theme) === 'dark'; }
+    catch { return false; }
+  });
+
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+    }
+    try { localStorage.setItem(STORAGE_KEYS.theme, darkMode ? 'dark' : 'light'); }
+    catch {}
+  }, [darkMode]);
+
+  const handleToggleTheme = useCallback(() => {
+    const html = document.documentElement;
+    html.classList.add('no-transition');
+    setDarkMode(prev => !prev);
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      html.classList.remove('no-transition');
+    }));
+  }, []);
 
   const handleMarkNotificationsAsRead = useCallback((type: string) => {
     setNotifications(prev =>
@@ -385,6 +410,8 @@ export default function App() {
             onMarkNotificationsAsRead={handleMarkNotificationsAsRead}
             onDeleteProject={handleDeleteProject}
             onUpdateProject={handleUpdateProject}
+            darkMode={darkMode}
+            onToggleTheme={handleToggleTheme}
           />
           <div className="fixed inset-0 z-50 overflow-y-auto" style={{ background: '#F4F6FA' }}>
             <CreateSurveyForm
@@ -492,6 +519,8 @@ export default function App() {
         onMarkNotificationsAsRead={handleMarkNotificationsAsRead}
         onDeleteProject={handleDeleteProject}
         onUpdateProject={handleUpdateProject}
+        darkMode={darkMode}
+        onToggleTheme={handleToggleTheme}
       />
     </ErrorBoundary>
   );

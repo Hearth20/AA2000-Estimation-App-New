@@ -42,6 +42,9 @@
       input[type="number"]::-webkit-outer-spin-button,
       input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
+      /* ─── Disable transitions during theme switch ─── */
+      .no-transition, .no-transition * { transition: none !important; }
+
       /* ─── Focus ring ─── */
       :focus-visible { outline: 2px solid #2563EB; outline-offset: 2px; }
 
@@ -163,7 +166,7 @@
         border: 1px solid #E2E8F0;
         border-radius: 20px;
         box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.04);
-        transition: box-shadow 0.2s ease, border-color 0.2s ease;
+        transition: box-shadow 0.2s ease;
       }
       .card:hover {
         box-shadow: 0 4px 20px rgba(0,0,0,0.08);
@@ -253,10 +256,67 @@
         border-radius: 50%;
         display: inline-block;
       }
+
+      /* ══════════════════════════════════════════
+         DARK MODE (toggled via data-theme="dark" on <html>)
+      ══════════════════════════════════════════ */
+      [data-theme="dark"] body {
+        background-color: #0F172A;
+        color: #E2E8F0;
+      }
+      [data-theme="dark"] .glass {
+        background: rgba(15, 23, 42, 0.8);
+        backdrop-filter: blur(16px) saturate(180%);
+        -webkit-backdrop-filter: blur(16px) saturate(180%);
+        border-color: rgba(255,255,255,0.06);
+      }
+      [data-theme="dark"] .card {
+        background: #1E293B;
+        border-color: #334155;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.2), 0 4px 16px rgba(0,0,0,0.2);
+      }
+      [data-theme="dark"] .card:hover {
+        border-color: #475569;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      }
+      [data-theme="dark"] .card-gradient-border {
+        background: #1E293B;
+      }
+      [data-theme="dark"] .skeleton {
+        background: linear-gradient(90deg, #334155 25%, #475569 50%, #334155 75%);
+        background-size: 1000px 100%;
+      }
+      [data-theme="dark"] ::-webkit-scrollbar-thumb { background: #475569; }
+      [data-theme="dark"] ::-webkit-scrollbar-thumb:hover { background: #64748B; }
+      [data-theme="dark"] .progress-bar-track { background: #334155; }
+      [data-theme="dark"] .modal-backdrop {
+        background: rgba(0, 0, 0, 0.6);
+      }
+      [data-theme="dark"] .search-input {
+        background: rgba(30, 41, 59, 0.8) !important;
+        border-color: #334155 !important;
+        color: #E2E8F0 !important;
+      }
+      [data-theme="dark"] .search-input::placeholder { color: #64748B; }
+      [data-theme="dark"] .text-slate-700 { color: #E2E8F0 !important; }
+      [data-theme="dark"] .text-slate-500 { color: #94A3B8 !important; }
+      [data-theme="dark"] .text-slate-400 { color: #64748B !important; }
+      [data-theme="dark"] .bg-slate-50,
+      [data-theme="dark"] .bg-slate-50\/80 { background: rgba(30, 41, 59, 0.8) !important; }
+      [data-theme="dark"] .bg-white { background: #1E293B !important; border-color: #334155 !important; }
+      [data-theme="dark"] .border-slate-200 { border-color: #334155 !important; }
+      [data-theme="dark"] .border-slate-100 { border-color: #1E293B !important; }
+      [data-theme="dark"] .bg-slate-100 { background: #1E293B !important; }
+      [data-theme="dark"] .hover\:bg-slate-100:hover { background: rgba(51, 65, 85, 0.5) !important; }
+      [data-theme="dark"] .hover\:bg-slate-50:hover { background: rgba(30, 41, 59, 0.8) !important; }
     </style>
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      // Set dark mode immediately to prevent flash
+      try { var t = localStorage.getItem('aa2000_theme'); if (t === 'dark') document.documentElement.setAttribute('data-theme', 'dark'); } catch(e) {}
+    </script>
     <script type="module" src="/src/main.tsx"></script>
     <script>
       // Auto-select number inputs

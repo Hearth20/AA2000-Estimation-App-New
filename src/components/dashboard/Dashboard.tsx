@@ -10,6 +10,7 @@ import CompanyDetail from '../projects/CompanyDetail';
 import AccountDropdown from './AccountDropdown';
 import { getRoleTheme } from '../../utils/RoleTheme';
 import CalendarView from './CalendarView';
+import ThemeToggle from './ThemeToggle';
 
 interface Props {
   user: User;
@@ -25,6 +26,8 @@ interface Props {
   onMarkNotificationsAsRead?: (type: string) => void;
   onDeleteProject?: (projectId: string) => void;
   onUpdateProject?: (project: Project) => void;
+  darkMode?: boolean;
+  onToggleTheme?: () => void;
 }
 
 type SortMode = 'newest' | 'oldest' | 'name-asc' | 'name-desc';
@@ -170,6 +173,8 @@ export default function Dashboard({
   onMarkNotificationsAsRead,
   onDeleteProject,
   onUpdateProject,
+  darkMode,
+  onToggleTheme,
 }: Props) {
   const [view, setView] = useState<View>('home');
   const [showCreate, setShowCreate] = useState(false);
@@ -331,11 +336,13 @@ export default function Dashboard({
     <div
       className="flex h-screen overflow-hidden w-full"
       style={{
-        background: 'radial-gradient(ellipse at 20% 20%, rgba(191,219,254,0.2) 0%, transparent 55%), #F8FAFC',
+        background: darkMode
+          ? '#0F172A'
+          : 'radial-gradient(ellipse at 20% 20%, rgba(191,219,254,0.2) 0%, transparent 55%), #F8FAFC',
       }}
     >
       <div className="h-screen sticky top-0 z-40">
-        <Sidebar user={user} currentView={view} onNavigate={navigate} notifications={notifications} />
+        <Sidebar user={user} currentView={view} onNavigate={navigate} notifications={notifications} darkMode={darkMode} />
       </div>
 
       <main className="flex-1 flex flex-col min-w-0 relative overflow-hidden">
@@ -345,7 +352,7 @@ export default function Dashboard({
         ══════════════════════════════════════════ */}
         <div
           className="sticky top-0 z-50 px-6 h-14 flex items-center justify-between shrink-0 glass"
-          style={{ borderBottom: '1px solid rgba(226,232,240,0.8)' }}
+          style={{ borderBottom: `1px solid ${darkMode ? 'rgba(51,65,85,0.8)' : 'rgba(226,232,240,0.8)'}` }}
         >
           {/* Left: System status + date */}
           <div className="flex items-center gap-3">
@@ -380,6 +387,9 @@ export default function Dashboard({
 
             {/* Notification Bell */}
             <NotificationBell notifications={notifications} onViewAll={navigateNotif} />
+
+            {/* Theme Toggle (Dark/Light Mode) */}
+            {onToggleTheme && <ThemeToggle darkMode={!!darkMode} onToggle={onToggleTheme} />}
 
             {/* Divider */}
             <div className="w-px h-5 bg-slate-200" />

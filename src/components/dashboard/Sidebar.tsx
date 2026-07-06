@@ -16,6 +16,7 @@ interface Props {
   currentView: View;
   onNavigate: (view: View) => void;
   notifications?: Notification[];
+  darkMode?: boolean;
 }
 
 const navIcons: Record<string, React.ReactNode> = {
@@ -106,10 +107,17 @@ const navIcons: Record<string, React.ReactNode> = {
   ),
 };
 
-export default function Sidebar({ user, currentView, onNavigate, notifications }: Props) {
+export default function Sidebar({ user, currentView, onNavigate, notifications, darkMode }: Props) {
   const isAdmin = user.role === 'ADMIN';
   const theme = getRoleTheme(user.role);
   const [collapsed, setCollapsed] = useState(false);
+
+  // Dark mode sidebar overrides
+  const sidebarBg = darkMode ? '#0F172A' : theme.sidebarBg;
+  const sidebarBorder = darkMode ? '#1E293B' : theme.sidebarBorder;
+  const sidebarText = darkMode ? '#F1F5F9' : '#1E293B';
+  const sidebarTextMuted = darkMode ? '#94A3B8' : '#64748B';
+  const sidebarTextSubtle = darkMode ? '#64748B' : '#94A3B8';
 
   const getUnreadCount = (viewName: View) => {
     if (!notifications) return 0;
@@ -205,22 +213,22 @@ export default function Sidebar({ user, currentView, onNavigate, notifications }
       className="flex flex-col h-full shrink-0 overflow-hidden transition-all duration-300"
       style={{
         width: collapsed ? 64 : 240,
-        background: theme.sidebarBg,
-        borderRight: `1px solid ${theme.sidebarBorder}`,
+        background: sidebarBg,
+        borderRight: `1px solid ${sidebarBorder}`,
       }}
     >
       {/* ── Brand Logo / Back + Collapse toggle ── */}
       <div
         className="px-3 h-16 flex items-center justify-between shrink-0"
-        style={{ borderBottom: `1px solid ${theme.sidebarBorder}` }}
+        style={{ borderBottom: `1px solid ${sidebarBorder}` }}
       >
         {isNotificationView ? (
           <button
             onClick={() => onNavigate('home')}
             className="flex items-center gap-2 font-bold text-xs transition-colors"
-            style={{ color: '#64748B' }}
+            style={{ color: sidebarTextMuted }}
             onMouseEnter={e => (e.currentTarget.style.color = theme.primary)}
-            onMouseLeave={e => (e.currentTarget.style.color = '#64748B')}
+            onMouseLeave={e => (e.currentTarget.style.color = sidebarTextMuted)}
           >
             <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -275,7 +283,7 @@ export default function Sidebar({ user, currentView, onNavigate, notifications }
       {!isNotificationView && (
         <div
           className="px-3 py-3 shrink-0"
-          style={{ borderBottom: `1px solid ${theme.sidebarBorder}` }}
+          style={{ borderBottom: `1px solid ${sidebarBorder}` }}
         >
           <div className={`flex items-center gap-2.5 ${collapsed ? 'justify-center' : ''}`}>
             <div className="relative shrink-0">
@@ -296,7 +304,7 @@ export default function Sidebar({ user, currentView, onNavigate, notifications }
             </div>
             {!collapsed && (
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-bold truncate text-[#1E293B]">
+                <p className="text-xs font-bold truncate" style={{ color: sidebarText }}>
                   {user.fullName || user.email}
                 </p>
                 <div className="flex items-center gap-1.5 mt-0.5">
@@ -325,7 +333,7 @@ export default function Sidebar({ user, currentView, onNavigate, notifications }
             {!collapsed && (
               <p
                 className="px-2.5 mb-1.5 text-[9px] font-bold uppercase tracking-widest"
-                style={{ color: '#94A3B8' }}
+                style={{ color: sidebarTextSubtle }}
               >
                 {group.label}
               </p>
@@ -357,28 +365,28 @@ export default function Sidebar({ user, currentView, onNavigate, notifications }
                             paddingLeft: collapsed ? undefined : '8px',
                           }
                         : {
-                            color: '#64748B',
+                            color: sidebarTextMuted,
                             borderLeft: collapsed ? undefined : '2.5px solid transparent',
                           }
                     }
                     onMouseEnter={e => {
                       if (!active) {
                         (e.currentTarget as HTMLElement).style.background = `${theme.primary}08`;
-                        (e.currentTarget as HTMLElement).style.color = '#1E293B';
+                        (e.currentTarget as HTMLElement).style.color = sidebarText;
                         (e.currentTarget as HTMLElement).style.transform = 'translateX(2px)';
                       }
                     }}
                     onMouseLeave={e => {
                       if (!active) {
                         (e.currentTarget as HTMLElement).style.background = 'transparent';
-                        (e.currentTarget as HTMLElement).style.color = '#64748B';
+                        (e.currentTarget as HTMLElement).style.color = sidebarTextMuted;
                         (e.currentTarget as HTMLElement).style.transform = 'translateX(0)';
                       }
                     }}
                   >
                     <span
                       className="shrink-0 transition-colors"
-                      style={{ color: active ? theme.primary : '#94A3B8' }}
+                      style={{ color: active ? theme.primary : sidebarTextSubtle }}
                     >
                       {navIcons[item.view]}
                     </span>
@@ -411,7 +419,7 @@ export default function Sidebar({ user, currentView, onNavigate, notifications }
       {!collapsed && (
         <div
           className="px-4 py-3 shrink-0"
-          style={{ borderTop: `1px solid ${theme.sidebarBorder}` }}
+          style={{ borderTop: `1px solid ${sidebarBorder}` }}
         >
           <div className="flex items-center gap-2">
             <span className="relative flex h-1.5 w-1.5">
