@@ -124,6 +124,7 @@ function StatCard({
   color,
   bg,
   delay = 0,
+  onClick,
 }: {
   label: string;
   value: number;
@@ -132,10 +133,12 @@ function StatCard({
   color: string;
   bg: string;
   delay?: number;
+  onClick?: () => void;
 }) {
   return (
     <div
-      className="flex-1 min-w-0 bg-white rounded-2xl p-5 border relative overflow-hidden hover-lift animate-fade-in-up"
+      onClick={onClick}
+      className="flex-1 min-w-0 bg-white rounded-2xl p-5 border relative overflow-hidden hover-lift animate-fade-in-up cursor-pointer"
       style={{ borderColor: '#E2E8F0', animationDelay: `${delay}ms` }}
     >
       <div className="flex items-start justify-between mb-3">
@@ -426,11 +429,11 @@ export default function Dashboard({
 
                   {/* Stats row */}
                   <div className="px-6 pt-5 flex flex-row gap-4 w-full flex-wrap">
-                    <StatCard label="Companies"  value={companyCount}  sub="Company folders"  emoji="🏢" color={theme.primary} bg={theme.primaryAlpha08} delay={0}   />
-                    <StatCard label="Projects"   value={totalProjects} sub="All site surveys" emoji="📋" color={theme.primary} bg={theme.primaryAlpha08} delay={50}  />
-                    <StatCard label="In Progress" value={inProgressCount} sub="Ongoing surveys" emoji="⚡" color={theme.primary} bg={theme.primaryAlpha08} delay={100} />
-                    <StatCard label="Pending"    value={pendingCount}  sub="Awaiting start"   emoji="🗓️" color="#D97706" bg="rgba(217,119,6,0.08)"  delay={150} />
-                    <StatCard label="Completed"  value={completedCount} sub="Finalized surveys" emoji="✅" color="#059669" bg="rgba(5,150,105,0.08)" delay={200} />
+                    <StatCard label="Companies"   value={companyCount}    sub="Company folders"   emoji="🏢" color={theme.primary} bg={theme.primaryAlpha08} delay={0}   onClick={() => navigate('home')} />
+                    <StatCard label="Projects"    value={totalProjects}   sub="All site surveys"  emoji="📋" color={theme.primary} bg={theme.primaryAlpha08} delay={50}  onClick={() => navigate('assignment')} />
+                    <StatCard label="In Progress" value={inProgressCount} sub="Ongoing surveys"   emoji="⚡" color={theme.primary} bg={theme.primaryAlpha08} delay={100} onClick={() => navigate('workspace')} />
+                    <StatCard label="Pending"     value={pendingCount}    sub="Awaiting start"    emoji="🗓️" color="#D97706" bg="rgba(217,119,6,0.08)"  delay={150} onClick={() => navigate('workspace')} />
+                    <StatCard label="Completed"   value={completedCount}  sub="Finalized surveys" emoji="✅" color="#059669" bg="rgba(5,150,105,0.08)" delay={200} onClick={() => navigate('done')} />
                   </div>
 
                   {/* Pipeline + Categories */}
