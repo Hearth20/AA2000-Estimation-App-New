@@ -382,10 +382,11 @@ export default function ProjectDetail({ user, project, onBack, onStartSurvey, on
               className="absolute top-[20px] left-8 h-1 bg-blue-600 z-0 transition-all duration-700 rounded-full" 
               style={{ 
                 width: `${
-                  (project.status === 'Pending' ? 0 :
-                   project.status === 'In Progress' || project.status === 'Finalized - Rejected' ? 33 :
-                   project.status === 'Finalized' ? 66 : 100)
-                }%` 
+                  (project.status === 'Pending' ? '0px' :
+                   project.status === 'In Progress' || project.status === 'Finalized - Rejected' ? 'calc(33.33% - 1.33rem)' :
+                   project.status === 'Finalized' ? 'calc(66.67% - 2.67rem)' : 
+                   'calc(100% - 4rem)')
+                }` 
               }}
             />
 
