@@ -1059,13 +1059,13 @@ export default function EstimationSummary({ project, user, onBack, onUpdateStatu
                 <td style="padding: 8px 10px; border: 1px solid #E2E8F0; text-align: right; color: #64748B;">-</td>
                 <td style="padding: 8px 10px; border: 1px solid #E2E8F0; text-align: right; color: #1E293B; font-weight: 600;">PHP ${totalFees.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</td>
               </tr>` : ''}
-              <!-- Estimated Row -->
+              <!-- VAT Row -->
               <tr>
-                <td style="padding: 8px 10px; border: 1px solid #E2E8F0; font-weight: 700; color: #64748B;">Estimated</td>
-                <td style="padding: 8px 10px; border: 1px solid #E2E8F0; color: #1E293B; font-weight: 600;">Estimated (${systemLabel}) with VAT</td>
+                <td style="padding: 8px 10px; border: 1px solid #E2E8F0; font-weight: 700; color: #64748B;">Cost Summary</td>
+                <td style="padding: 8px 10px; border: 1px solid #E2E8F0; color: #1E293B; font-weight: 600;">VAT (12%)</td>
                 <td style="padding: 8px 10px; border: 1px solid #E2E8F0; text-align: center; color: #64748B;">-</td>
                 <td style="padding: 8px 10px; border: 1px solid #E2E8F0; text-align: right; color: #64748B;">-</td>
-                <td style="padding: 8px 10px; border: 1px solid #E2E8F0; text-align: right; color: #1E293B; font-weight: 700;">PHP ${grandTotalWithVAT.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</td>
+                <td style="padding: 8px 10px; border: 1px solid #E2E8F0; text-align: right; color: #1E293B; font-weight: 700;">PHP ${vat.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</td>
               </tr>
               <!-- Grand Total row -->
               <tr style="background: #EFF6FF;">

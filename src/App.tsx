@@ -466,6 +466,7 @@ export default function App() {
         <div className="h-screen flex flex-col overflow-hidden">
           <SurveySummary
             project={currentProject}
+            user={user}
             onBack={() => setScreen('project-detail')}
             onViewEstimation={handleViewEstimation}
           />
