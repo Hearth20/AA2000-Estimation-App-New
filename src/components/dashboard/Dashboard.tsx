@@ -221,12 +221,35 @@ export default function Dashboard({
   const ordered = [...pinnedItems, ...unpinnedItems];
 
   // Stats
-  const companyCount = projectList.filter(p => p.buildingType === 'Other').length;
+  const companyFolders = projectList.filter(p => p.buildingType === 'Other');
   const actualProjects = projectList.filter(p => p.buildingType !== 'Other');
   const totalProjects = actualProjects.length;
-  const inProgressCount = actualProjects.filter(p => p.status === 'In Progress').length;
-  const pendingCount = actualProjects.filter(p => p.status === 'Pending').length;
-  const completedCount = actualProjects.filter(p => p.status === 'Completed' || p.status?.includes('Finalized')).length;
+  const companyCount = companyFolders.length;
+
+  // Derive display status for each company folder (matching Home.tsx logic)
+  const folderStatusMap: Record<string, string> = {};
+  for (const folder of companyFolders) {
+    const children = actualProjects.filter(
+      p => p.clientName === folder.name || p.clientName === folder.clientName
+    );
+    if (children.length === 0) {
+      folderStatusMap[folder.id] = folder.status;
+    } else {
+      const priority = ['Completed', 'Finalized - Approved', 'Finalized', 'Finalized - Rejected', 'In Progress', 'Pending'];
+      let found = folder.status;
+      for (const s of priority) {
+        if (children.some(c => c.status === s)) { found = s; break; }
+      }
+      folderStatusMap[folder.id] = found;
+    }
+  }
+
+  const pendingCount = companyFolders.filter(p => (folderStatusMap[p.id] || p.status) === 'Pending').length;
+  const inProgressCount = companyFolders.filter(p => (folderStatusMap[p.id] || p.status) === 'In Progress').length;
+  const completedCount = companyFolders.filter(p => {
+    const s = folderStatusMap[p.id] || p.status;
+    return s === 'Completed' || s.includes('Finalized');
+  }).length;
 
   const countOngoing = notifications.filter(n => n.type === 'ongoing').length;
   const countUpcoming = notifications.filter(n => n.type === 'upcoming').length;

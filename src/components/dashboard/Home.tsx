@@ -169,11 +169,31 @@ export default function Home({
 
   // Compute KPI stats for hero
   const actualProjects = projectList.filter(p => p.buildingType !== 'Other');
-  const pendingCount = actualProjects.filter(p => p.status === 'Pending').length;
-  const inProgressCount = actualProjects.filter(p => p.status === 'In Progress').length;
-  const completedCount = actualProjects.filter(
-    p => p.status === 'Completed' || p.status?.includes('Finalized')
-  ).length;
+
+  // Derive display status for each company folder (matching company list badges)
+  const folderStatusMap: Record<string, string> = {};
+  for (const folder of userProjects) {
+    const children = actualProjects.filter(
+      p => p.clientName === folder.name || p.clientName === folder.clientName
+    );
+    if (children.length === 0) {
+      folderStatusMap[folder.id] = folder.status;
+    } else {
+      const priority = ['Completed', 'Finalized - Approved', 'Finalized', 'Finalized - Rejected', 'In Progress', 'Pending'];
+      let found = folder.status;
+      for (const s of priority) {
+        if (children.some(c => c.status === s)) { found = s; break; }
+      }
+      folderStatusMap[folder.id] = found;
+    }
+  }
+
+  const pendingCount = userProjects.filter(p => (folderStatusMap[p.id] || p.status) === 'Pending').length;
+  const inProgressCount = userProjects.filter(p => (folderStatusMap[p.id] || p.status) === 'In Progress').length;
+  const completedCount = userProjects.filter(p => {
+    const s = folderStatusMap[p.id] || p.status;
+    return s === 'Completed' || s.includes('Finalized');
+  }).length;
   const today = new Date().toISOString().split('T')[0];
   const todayCount = actualProjects.filter(p => p.startDate === today).length;
 
