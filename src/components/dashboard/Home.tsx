@@ -15,10 +15,12 @@ interface HomeProps {
 type SortMode = 'newest' | 'oldest' | 'name-asc' | 'name-desc';
 
 const statusConfig: Record<string, { color: string; bg: string; bar: string }> = {
-  'In Progress': { color: '#2563EB', bg: 'rgba(37,99,235,0.08)', bar: '#2563EB' },
-  'Pending':     { color: '#D97706', bg: 'rgba(217,119,6,0.08)', bar: '#D97706' },
-  'Completed':   { color: '#059669', bg: 'rgba(5,150,105,0.08)', bar: '#059669' },
-  'Finalized':   { color: '#059669', bg: 'rgba(5,150,105,0.08)', bar: '#059669' },
+  'In Progress':         { color: '#2563EB', bg: 'rgba(37,99,235,0.08)',   bar: '#2563EB' },
+  'Pending':             { color: '#D97706', bg: 'rgba(217,119,6,0.08)',   bar: '#D97706' },
+  'Completed':           { color: '#059669', bg: 'rgba(5,150,105,0.08)',   bar: '#059669' },
+  'Finalized - Approved':{ color: '#059669', bg: 'rgba(5,150,105,0.08)',   bar: '#059669' },
+  'Finalized - Rejected':{ color: '#DC2626', bg: 'rgba(220,38,38,0.08)',   bar: '#DC2626' },
+  'Finalized':           { color: '#7C3AED', bg: 'rgba(124,58,237,0.08)',  bar: '#7C3AED' },
 };
 
 function StatusBadge({ status }: { status: string }) {
@@ -468,6 +470,14 @@ export default function Home({
                           100
                       )
                     : 0;
+                const displayStatus = (() => {
+                  if (childProjects.length === 0) return project.status;
+                  const priority = ['Completed', 'Finalized - Approved', 'Finalized', 'Finalized - Rejected', 'In Progress', 'Pending'];
+                  for (const s of priority) {
+                    if (childProjects.some(c => c.status === s)) return s;
+                  }
+                  return project.status;
+                })();
 
                 return (
                   <div
@@ -516,7 +526,7 @@ export default function Home({
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0">
-                      <StatusBadge status={project.status} />
+                      <StatusBadge status={displayStatus} />
                       {/* Context menu */}
                       <div className="relative" onClick={e => e.stopPropagation()}>
                         <button

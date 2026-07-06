@@ -9,10 +9,12 @@ interface CalendarViewProps {
 }
 
 const statusConfig: Record<string, { color: string; bg: string; dot: string }> = {
-  'In Progress': { color: '#2563EB', bg: 'rgba(37,99,235,0.08)', dot: '#2563EB' },
-  'Pending':     { color: '#D97706', bg: 'rgba(217,119,6,0.08)', dot: '#D97706' },
-  'Completed':   { color: '#059669', bg: 'rgba(5,150,105,0.08)', dot: '#059669' },
-  'Finalized':   { color: '#7C3AED', bg: 'rgba(124,58,237,0.08)', dot: '#7C3AED' },
+  'In Progress':         { color: '#2563EB', bg: 'rgba(37,99,235,0.08)',   dot: '#2563EB' },
+  'Pending':             { color: '#D97706', bg: 'rgba(217,119,6,0.08)',   dot: '#D97706' },
+  'Completed':           { color: '#059669', bg: 'rgba(5,150,105,0.08)',   dot: '#059669' },
+  'Finalized - Approved':{ color: '#059669', bg: 'rgba(5,150,105,0.08)',   dot: '#059669' },
+  'Finalized - Rejected':{ color: '#DC2626', bg: 'rgba(220,38,38,0.08)',   dot: '#DC2626' },
+  'Finalized':           { color: '#7C3AED', bg: 'rgba(124,58,237,0.08)',  dot: '#7C3AED' },
 };
 
 export default function CalendarView({ projects, onSelectProject, userRole }: CalendarViewProps) {
