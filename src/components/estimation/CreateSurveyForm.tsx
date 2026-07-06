@@ -161,7 +161,7 @@ export default function CreateSurveyForm({
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#F8FAFC' }}>
       {/* Header */}
-      <header className="sticky top-0 z-10 px-6 py-3 bg-gradient-to-r from-white to-blue-50 border-b border-slate-200 shadow-sm">
+      <header className="sticky top-0 z-40 px-6 py-3 bg-gradient-to-r from-white to-blue-50 border-b border-slate-200 shadow-sm">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center gap-3 mb-4">
               <div

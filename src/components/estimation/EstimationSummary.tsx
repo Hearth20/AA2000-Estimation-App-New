@@ -1243,7 +1243,7 @@ export default function EstimationSummary({ project, user, onBack, onUpdateStatu
   );
 
   return (
-    <div className="min-h-screen pb-16" style={{ background: '#F8FAFC' }}>
+    <div className="flex-1 overflow-y-auto pb-16" style={{ background: '#F8FAFC' }}>
       {/* Header */}
       <header className="sticky top-0 z-40 px-6 py-4 bg-gradient-to-r from-white/95 to-blue-50/95 border-b border-slate-200 shadow-sm backdrop-blur-md">
         <div className="max-w-5xl mx-auto flex items-center justify-between">

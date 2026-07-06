@@ -415,15 +415,17 @@ export default function App() {
   if (screen === 'project-detail' && currentProject) {
     return (
       <ErrorBoundary>
-        <ProjectDetail
-          user={user}
-          project={currentProject}
-          onBack={handleBackToDashboard}
-          onStartSurvey={handleStartSurvey}
-          onViewEstimation={handleViewEstimation}
-          onViewSurveySummary={() => setScreen('survey-summary')}
-          onUpdateStatus={handleUpdateProjectStatus}
-        />
+        <div className="h-screen flex flex-col overflow-hidden">
+          <ProjectDetail
+            user={user}
+            project={currentProject}
+            onBack={handleBackToDashboard}
+            onStartSurvey={handleStartSurvey}
+            onViewEstimation={handleViewEstimation}
+            onViewSurveySummary={() => setScreen('survey-summary')}
+            onUpdateStatus={handleUpdateProjectStatus}
+          />
+        </div>
       </ErrorBoundary>
     );
   }
@@ -431,12 +433,14 @@ export default function App() {
   if (screen === 'survey' && currentProject && currentSurveyType) {
     return (
       <ErrorBoundary>
-        <SurveyWizard
-          projectId={currentProject.id}
-          surveyType={currentSurveyType}
-          onComplete={handleSurveyComplete}
-          onBack={() => setScreen('project-detail')}
-        />
+        <div className="h-screen flex flex-col overflow-hidden">
+          <SurveyWizard
+            projectId={currentProject.id}
+            surveyType={currentSurveyType}
+            onComplete={handleSurveyComplete}
+            onBack={() => setScreen('project-detail')}
+          />
+        </div>
       </ErrorBoundary>
     );
   }
@@ -444,12 +448,14 @@ export default function App() {
   if (screen === 'estimation' && currentProject) {
     return (
       <ErrorBoundary>
-        <EstimationSummary
-          project={currentProject}
-          user={user}
-          onBack={() => setScreen('project-detail')}
-          onUpdateStatus={handleUpdateProjectStatus}
-        />
+        <div className="h-screen flex flex-col overflow-hidden">
+          <EstimationSummary
+            project={currentProject}
+            user={user}
+            onBack={() => setScreen('project-detail')}
+            onUpdateStatus={handleUpdateProjectStatus}
+          />
+        </div>
       </ErrorBoundary>
     );
   }
@@ -457,11 +463,13 @@ export default function App() {
   if (screen === 'survey-summary' && currentProject) {
     return (
       <ErrorBoundary>
-        <SurveySummary
-          project={currentProject}
-          onBack={() => setScreen('project-detail')}
-          onViewEstimation={handleViewEstimation}
-        />
+        <div className="h-screen flex flex-col overflow-hidden">
+          <SurveySummary
+            project={currentProject}
+            onBack={() => setScreen('project-detail')}
+            onViewEstimation={handleViewEstimation}
+          />
+        </div>
       </ErrorBoundary>
     );
   }

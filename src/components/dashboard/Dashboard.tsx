@@ -308,7 +308,7 @@ export default function Dashboard({
         background: 'radial-gradient(ellipse at 20% 20%, rgba(191,219,254,0.2) 0%, transparent 55%), #F8FAFC',
       }}
     >
-      <div className="h-screen sticky top-0 z-20">
+      <div className="h-screen sticky top-0 z-40">
         <Sidebar user={user} currentView={view} onNavigate={navigate} notifications={notifications} />
       </div>
 
@@ -318,7 +318,7 @@ export default function Dashboard({
             TOP NAVIGATION BAR (Glassmorphism)
         ══════════════════════════════════════════ */}
         <div
-          className="sticky top-0 z-30 px-6 h-14 flex items-center justify-between shrink-0 glass"
+          className="sticky top-0 z-50 px-6 h-14 flex items-center justify-between shrink-0 glass"
           style={{ borderBottom: '1px solid rgba(226,232,240,0.8)' }}
         >
           {/* Left: System status + date */}

@@ -192,7 +192,7 @@ export default function Settings({ user, onBack, onLogout, notifications = [] }:
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
         {/* Top Header Bar */}
         <div
-          className="px-8 h-16 flex items-center justify-between shrink-0 bg-gradient-to-r from-white to-blue-50 border-b border-slate-200 shadow-sm w-full"
+          className="sticky top-0 z-40 px-8 h-16 flex items-center justify-between shrink-0 bg-gradient-to-r from-white to-blue-50 border-b border-slate-200 shadow-sm w-full"
         >
           {/* App status */}
           <div className="flex items-center gap-2 bg-[#F8FAFC] border border-[#E5E7EB] rounded-full px-3 py-1.5">

@@ -171,10 +171,10 @@ export default function ProjectDetail({ user, project, onBack, onStartSurvey, on
   };
 
   return (
-    <div className="min-h-screen pb-12" style={{ background: '#F8FAFC' }}>
+    <div className="flex-1 overflow-y-auto pb-12" style={{ background: '#F8FAFC' }}>
       {/* Header */}
       <header
-        className="sticky top-0 z-10 px-6 py-4 bg-gradient-to-r from-white to-blue-50 border-b border-slate-200 shadow-sm"
+        className="sticky top-0 z-40 px-6 py-4 bg-gradient-to-r from-white to-blue-50 border-b border-slate-200 shadow-sm"
       >
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <button
